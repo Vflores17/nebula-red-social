@@ -1,8 +1,36 @@
+/* imports*/
 import { useState } from "react";
+import "./Login.css";
 
+/* definicion del componente*/
 function Login() {
+  /* *************  estados del componente   **************/
   const [correo, setCorreo] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const regexCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  /* *******    funciones del componente    *************/
+  
+  /* Funcion para validar datos del formulario */
+  const handleLogin = (e) => {
+    e.preventDefault(); /* no recarga la pagina y no borra informacion */
+
+    /*Se limpia los inputs del usuario y se valida si estan vacios */
+    if (correo.trim() === "" || password.trim() === "") {
+      setError("Completa tu correo estelar y clave de acceso.");
+      return;
+    }
+     /*se valida que el correo tenga formato valido */
+    if (!regexCorreo.test(correo.trim())) {
+    setError("Ingresa un correo estelar válido.");
+    return;
+}
+
+    setError("");
+    console.log("Login visual correcto");
+  };
+
   return (
     <div className="login-page">
       <div className="login-header">
@@ -14,18 +42,50 @@ function Login() {
       <div className="login-card">
         <h2>Accede al cosmos</h2>
 
-        <form >
-          <label>Correo estelar</label>
-          <input type="email" placeholder="explorador@nebula.cosmos" value={correo} onChange={(e) => setCorreo(e.target.value)} />
+        <form onSubmit={handleLogin} noValidate>
+          <div className="input-mail">
+            <label>Correo estelar </label>
+            <input
+              type="email"
+              placeholder="explorador@nebula.cosmos"
+              value={correo}
+              onChange={(e) => setCorreo(e.target.value)}
+            />
+          </div>
+          <div className="input-pwd">
+            <label>Clave estelar </label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <div className="btn-submit">
+            <button id="btn_ingresar" type="submit">
+              Ingresar al universo ✨
+            </button>
+          </div>
+        </form> {error && (
+  <div className="modal-overlay">
+    <div className="modal-card">
+      <h3>⚠️ Acceso denegado</h3>
+      <p>{error}</p>
 
-          <label>Código de acceso</label>
-          <input type="password" placeholder="••••••••" value={password}
-          onChange={(e) => setPassword(e.target.value)}/>
-
-          <button type="submit">Ingresar al universo ✨</button>
-        </form>
-
-        <p className="register-link">¿Eres nuevo en el cosmos? Registrate</p>
+      <button
+        type="button"
+        className="modal-button"
+        onClick={() => setError("")}
+      >
+        Entendido
+      </button>
+    </div>
+  </div>
+)}
+        <br />
+        <p className="register-link">
+          ¿Eres nuevo en el cosmos? <span>Regístrate</span>
+        </p>
       </div>
     </div>
   );
