@@ -1,5 +1,6 @@
 /* imports*/
 import { useState } from "react";
+import { Link,useNavigate } from "react-router-dom";
 import "./Login.css";
 
 /* definicion del componente*/
@@ -9,7 +10,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const regexCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
+const navigate = useNavigate(); 
   /* *******    funciones del componente    *************/
   
   /* Funcion para validar datos del formulario */
@@ -29,6 +30,7 @@ function Login() {
 
     setError("");
     console.log("Login visual correcto");
+    navigate("/");
   };
 
   return (
@@ -63,6 +65,7 @@ function Login() {
           </div>
           <div className="btn-submit">
             <button id="btn_ingresar" type="submit">
+
               Ingresar al universo ✨
             </button>
           </div>
@@ -84,8 +87,8 @@ function Login() {
 )}
         <br />
         <p className="register-link">
-          ¿Eres nuevo en el cosmos? <span>Regístrate</span>
-        </p>
+  ¿Eres nuevo en el cosmos? <Link to="/register">Regístrate</Link>
+</p>
       </div>
     </div>
   );
