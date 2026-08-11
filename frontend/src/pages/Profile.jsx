@@ -12,7 +12,7 @@ import "./Profile.css";
 const Profile = () => {
   const [activeTab, setActiveTab] = useState("transmisiones");
   const [misPosts, setMisPosts] = useState([]);
-  const [userProfile, setUserProfile] = useSate(profile);
+  const [userProfile, setUserProfile] = useState(profile);
 
   useEffect(() => {
     const cargarTodo = async () => {
@@ -23,7 +23,7 @@ const Profile = () => {
         ...docSnap.data(),
         esRepost: false,
       }));
-      const propios = todosLosPosts.filter((post) => post.authorId === UserProfile.uid);
+      const propios = todosLosPosts.filter((post) => post.authorId === userProfile.uid);
 
       // 2. Posts que yo retransmití (aunque no sean míos originalmente)
       const repostsSnapshot = await getRepostsByUser(userProfile.uid);
