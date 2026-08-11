@@ -1,10 +1,8 @@
 /* imports*/
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-} from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../config/firebase";
 import "./Login.css";
 
 /* definicion del componente*/
@@ -18,24 +16,26 @@ function Login() {
   /* *******    funciones del componente    *************/
 
   /* Funcion para validar datos del formulario */
-  const handleLogin = (e) => {
-    e.preventDefault(); /* no recarga la pagina y no borra informacion */
+  const handleLogin = async (e) => {
+  e.preventDefault();
 
-    /*Se limpia los inputs del usuario y se valida si estan vacios */
-    if (correo.trim() === "" || password.trim() === "") {
-      setError("Completa tu correo estelar y clave de acceso.");
-      return;
-    }
-    /*se valida que el correo tenga formato valido */
-    if (!regexCorreo.test(correo.trim())) {
-      setError("Ingresa un correo estelar válido.");
-      return;
-    }
+  if (correo.trim() === "" || password.trim() === "") {
+    setError("Completa tu correo estelar y clave de acceso.");
+    return;
+  }
+  if (!regexCorreo.test(correo.trim())) {
+    setError("Ingresa un correo estelar válido.");
+    return;
+  }
 
+  try {
+    await signInWithEmailAndPassword(auth, correo.trim(), password);
     setError("");
-    console.log("Login visual correcto");
     navigate("/");
-  };
+  } catch (err) {
+    setError("Correo o clave incorrectos.");
+  }
+};
 
   return (
     <div className="login-page">
