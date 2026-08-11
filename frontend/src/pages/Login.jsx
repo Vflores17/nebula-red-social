@@ -1,6 +1,11 @@
 /* imports*/
 import { useState } from "react";
-import { Link,useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { createUserWithEmailAndPassword } from "../services/";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
 import "./Login.css";
 
 /* definicion del componente*/
@@ -10,9 +15,9 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const regexCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const navigate = useNavigate(); 
+  const navigate = useNavigate();
   /* *******    funciones del componente    *************/
-  
+
   /* Funcion para validar datos del formulario */
   const handleLogin = (e) => {
     e.preventDefault(); /* no recarga la pagina y no borra informacion */
@@ -22,11 +27,11 @@ const navigate = useNavigate();
       setError("Completa tu correo estelar y clave de acceso.");
       return;
     }
-     /*se valida que el correo tenga formato valido */
+    /*se valida que el correo tenga formato valido */
     if (!regexCorreo.test(correo.trim())) {
-    setError("Ingresa un correo estelar válido.");
-    return;
-}
+      setError("Ingresa un correo estelar válido.");
+      return;
+    }
 
     setError("");
     console.log("Login visual correcto");
@@ -43,7 +48,6 @@ const navigate = useNavigate();
 
       <div className="login-card">
         <h2>Accede al cosmos</h2>
-
         <form onSubmit={handleLogin} noValidate>
           <div className="input-mail">
             <label>Correo estelar </label>
@@ -65,30 +69,30 @@ const navigate = useNavigate();
           </div>
           <div className="btn-submit">
             <button id="btn_ingresar" type="submit">
-
               Ingresar al universo ✨
             </button>
           </div>
-        </form> {error && (
-  <div className="modal-overlay">
-    <div className="modal-card">
-      <h3>⚠️ Acceso denegado</h3>
-      <p>{error}</p>
+        </form>{" "}
+        {error && (
+          <div className="modal-overlay">
+            <div className="modal-card">
+              <h3>⚠️ Acceso denegado</h3>
+              <p>{error}</p>
 
-      <button
-        type="button"
-        className="modal-button"
-        onClick={() => setError("")}
-      >
-        Entendido
-      </button>
-    </div>
-  </div>
-)}
+              <button
+                type="button"
+                className="modal-button"
+                onClick={() => setError("")}
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        )}
         <br />
         <p className="register-link">
-  ¿Eres nuevo en el cosmos? <Link to="/register">Regístrate</Link>
-</p>
+          ¿Eres nuevo en el cosmos? <Link to="/register">Regístrate</Link>
+        </p>
       </div>
     </div>
   );

@@ -143,5 +143,4 @@ vite.config.ts.timestamp-*
 .vite/
 frontend/.gitkeep
 frontend/package-lock.json
-/frontend
 frontend/.gitkeep

@@ -1,0 +1,241 @@
+/* formato a la pagina*/
+.login-page {
+  min-height: 100vh; /* alto minimo en pantalla*/
+  width: 100%; /* ocupa el ancho disponible de pantalla*/ 
+  display: flex; /* ordena los elementos*/
+  flex-direction: column; /* coloca los elementos en columna*/
+  align-items: center; /* los alinea centrados*/
+  justify-content: center; /* centra verticalmente*/
+  background: /* se le da un color al fondo*/
+    radial-gradient(circle at center, rgba(120, 40, 180, 0.35), transparent 35%),
+    linear-gradient(180deg, #060b1f 0%, #070b1a 100%);
+  overflow: hidden;
+}
+
+/* componente para hacer aparecer las "estrellas" */
+.login-page::before {
+  content: ""; /*obligatorio para que funcione*/
+  position: absolute; /* coloca sobre la pagina*/
+  inset: 0; /* hace que ocupe toda la pantalla*/
+
+  background-image: /* forma las "estrellas" */
+    radial-gradient(white 1px, transparent 1px),
+    radial-gradient(white 1px, transparent 1px);
+
+  background-size: 120px 120px, 200px 200px; /*define el tamaño de las "estrellas"*/
+  background-position: 0 0, 60px 80px; /* mueves las lineas para q no queden en una sola linea*/
+
+  opacity: 0.45; /* hace las "estrellas" un poco transparentes*/
+  pointer-events: none; /* evita que las "estrellas" bloqueen componentes como botones o inputs*/
+}
+
+/* La sección del header de la pagina*/
+.login-header {
+  height: auto; /* adapta el alto automaticamente*/
+  margin-bottom: 25px; /* espacio debajo para q no este muy pegado*/
+  text-align: center; /* texto alineado*/
+}
+
+/* Logo de la pagina*/
+.login-header p{
+    color: grey; /*se le da color a al frase*/
+}
+
+/* se forma el circlo del logo*/
+.logo-circle {
+  width: 64px; /* define el ancho del circulo*/
+  height: 64px; /* define el alto del circulo*/
+  border-radius: 50%; /* se le da borde al circulo*/
+  background: var(--purple-gradient); /* se le aplica un color al circulo*/
+
+  display: flex; /* ordena el elemento del circulo*/
+  justify-content: center; /* centra el logo verticalmente*/
+  align-items: center; /* centra el logo horizontalmente*/
+
+  font-size: 28px; /* le define un tamaño */
+  margin: 0 auto 10px; /* aplica un margen dentro del circulo*/
+}
+
+/* Titulo de la pagina de login*/
+.logo-circle + h1{
+    font-size: 42px; /*se define un tamaño*/
+    padding: 0; /* se le quita el espacio interno del componente*/
+    color: var(--purple-primary); /* aplica el color*/
+}
+
+/*Contenedor del formulario */
+.login-card {
+  margin: 0 auto; /* aplica un margen automatico para centrarlo en pantalla*/
+  width: 90%; /* ocupo el 90% del ancho*/
+  max-width: 380px; /* utiliza como maximo*/
+  padding: 35px; /* espacio interno del componente*/
+
+  background-color: var(--bg-card); /* se aplica el color a la carta*/
+  backdrop-filter: blur(15px);/*se le hace un difuminado al fondo*/
+
+  border: 1px solid rgba(255,255,255,.10); /*se le hace un borde*/
+  border-radius: 16px; /*se redondea el borde*/
+
+  box-shadow: /*se le crea un fondo difuminado*/
+    0 8px 30px rgba(0,0,0,.45),
+    0 0 200px rgba(94,96,206,.25);
+}
+
+/* Titulo de la login card*/
+.login-card h2{
+    font-family: var(--font-title); /*se le cambia la tipografia*/
+    text-align: center; /*se centra el titulo*/
+}
+
+/* formato al form */ 
+.login-card form{
+    display: flex; /*ordena los elementos*/
+    flex-direction:column; /*se acomoda en columna*/
+    gap: 5px; /* separa los elementos*/
+}
+
+/* formato a los contenedores*/
+.input-mail, .input-pwd {
+    display: flex; /*ordena los elementos*/
+    flex-direction: column;/* los colocaen columna*/
+    gap: 8px; /*agrega un espaciado*/
+}
+
+
+/* formato a los labels*/
+.input-mail label, .input-pwd label{
+    color: var(--text-secondary); /*aplica el color*/
+    font-size: 15px; /*cambia el tamaño*/
+    margin-left: 0px; /* le quita el margen a la izquierda*/
+    text-align: left; /* acomoda a la izquierda el texto*/
+}
+
+/* formato a los inputs*/
+.input-mail input,.input-pwd input{
+    padding: 12px 15px; /*espaciado interno*/
+    border-radius: 10px; /*redondea los inputs*/
+    border: 1px solid rgba(255, 255, 255, .15); /*le aplica un borde*/
+    background: rgba(255, 255, 255, .08); /*le define un color*/
+    color: var(--text-primary); /* cambia el color del texto*/
+    outline: none; /*quita el borde con el click*/
+    margin-bottom: 10px; /* le pone un margen debajo*/
+}
+
+/* Cuando se hace clic en el input */
+.input-mail input:focus,
+.input-pwd input:focus {
+  border-color: var(--purple-primary); /*se cambia de color*/
+  box-shadow: 0 0 15px rgba(94,96,206,.4); /* se le hace una sombra*/
+}
+
+/*diseño del boton ingresar*/
+#btn_ingresar{
+    width: 100%; /* que ocupe el ancho al 100% del contenedor*/
+  padding: 14px; /*espaciado interno*/
+  border: none; /* que no tenga bordes*/
+  border-radius: 12px; /*redondeado los bordes*/
+  background: var(--purple-gradient); /*color del boton*/
+    color: white;
+  font-size: 17px; /*tamaño de letra*/
+  cursor: pointer; /*cambie el curso encima del boton*/
+  transition: .3s ease; /* hace el efecto hover suavemente*/
+}
+
+/*efecto cuando esta el mouse encima*/
+#btn_ingresar:hover{
+    transform: translateY(-3px); /*cambia de posicion el boton*/
+    box-shadow: 0 0 20px rgba(94,96,206,.5); /* le hace una sombra*/
+}
+
+/*texto de registro*/
+.register-link{
+    text-align: center; /* se centra el texto*/
+    color: var(--text-secondary); /*aplica un color*/
+}
+
+/*se cambie el estilo al link hacia registro*/
+.register-link a{
+    color: var(--purple-primary);
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+    transition: .3s ease;
+}
+
+.register-link a:hover{
+    color: white;
+}
+
+/*efecto oscuro detras del modal*/
+.modal-overlay {
+  position: fixed;/* se fija sobre toda la pantalla*/
+  inset: 0; /* hace que ocupe la pantalla*/
+
+  background: rgba(0, 0, 0, 0.65);/*oscurece el fondo*/
+  backdrop-filter: blur(8px);/* difumina lo que esta atras*/
+
+  display: flex; /* ordena los elementos*/
+  justify-content: center; /*centra horizontalmente*/
+  align-items: center; /*centra verticalmente*/
+
+  z-index: 1000; /* coloca el modal encima de lo demas*/
+}
+
+/*tarjeta del modal*/
+.modal-card {
+  width: 90%; /* define al ancho al 90%*/
+  max-width: 360px; /*define ancho maximo*/
+
+  padding: 28px;/* espaciado interno del elemento*/
+
+  background: rgba(20, 20, 45, 0.95);/*aplica color*/
+  border: 1px solid rgba(255,255,255,.15); /* le hace un borde*/
+  border-radius: 18px; /*redondea el borde*/
+
+  text-align: center; /* centro el texto*/
+
+  box-shadow: /* hace una sombra*/
+    0 10px 40px rgba(0,0,0,.55),
+    0 0 35px rgba(94,96,206,.35);
+
+  animation: modalAppear .25s ease; /*hace una animacion de aparicion*/
+}
+
+/*titulo del modal*/
+.modal-card h3 {
+  margin-bottom: 12px; /*espaciado debajo del titulo*/
+  color: #ff6b6b;/*aplica color*/
+}
+
+/* texto del modal*/
+.modal-card p {
+  color: var(--text-secondary);/*aplica color*/
+  margin-bottom: 20px; /*espaciado debjo*/
+}
+
+/*boton del modal*/
+.modal-button {
+  width: 100%; /*utiliza todo el ancho*/
+  padding: 12px; /*espaciado interno*/
+
+  border: none; /*quita el borde*/ 
+  border-radius: 12px; /* redonde el boton*/
+
+  background: var(--purple-gradient); /*aplica un color con efecto degradado*/
+  color: white;/*color dle texto*/
+
+  cursor: pointer; /*cambia el puntero*/
+}
+
+/*animacion de entrada del modal*/
+@keyframes modalAppear {
+  from {
+    opacity: 0; /*empieza invisible*/
+    transform: scale(.92);/*empieza un poco mas pequeño*/
+  }
+
+  to {
+    opacity: 1; /*termina visible*/
+    transform: scale(1); /*termina al tamaño normal*/
+  }
+}
