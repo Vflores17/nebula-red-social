@@ -1,7 +1,6 @@
 /* imports*/
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword } from "../services/";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
