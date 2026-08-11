@@ -1,0 +1,36 @@
+.search-bar-card{
+    display: flex;
+    border: 2px solid #1c3abc80;
+    box-shadow: 2px 1px 15px 2px  #1c3abc80;
+    border-radius: 25px;
+    padding: 20px;
+    gap: 15px;
+    max-width: 100%;
+}
+
+.search-bar-card input{
+    flex: 1;
+    border: transparent;
+    background-color: transparent;
+    font-size: 18px;
+    padding: 2px;
+    max-width: 100%;
+}
+
+.search-bar-card input:focus{
+    outline: none;
+}
+.search-bar-card:focus-within {
+    border-color: #5f78e780;
+}
+
+.search-bar-card button{
+    aspect-ratio: 2 / 1;
+    flex-shrink: 0;
+    padding: 8px;
+    border: 2px solid;
+    border-radius: 50%;
+    background-color: transparent;
+    max-width: 100%;
+    cursor: pointer;
+}

@@ -1,0 +1,77 @@
+.navbar {
+    width: 100%;
+}
+
+.navbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 60px;
+    max-width: 950px;
+    margin: 0 auto;
+    padding: 16px 32px;
+    border-bottom: 2px solid #07226b;
+}
+
+.navbar-logo{
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 40px;
+}
+
+.navbar-logo h1{
+    font-size: 30px;
+}
+
+.navbar-right{
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.menu{
+    display: flex;
+    align-items: center;
+    list-style: none;
+    gap: 7px;
+}
+
+.itemMenu {
+    text-decoration: none;
+  color: inherit;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 2px 6px;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+     display: flex;         
+    align-items: center;    
+    gap: 7px;                
+}
+
+.itemMenu:hover {
+    background-color: rgba(168, 85, 247, 0.5);
+    border-radius: 8px;
+    padding: 5px 12px;
+}
+
+.btnSalir{
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 2px 6px;
+    transition: all 0.15s ease;
+}
+.btnSalir:hover{
+    background-color: rgba(239, 68, 68, 0.5);
+    border-radius: 6px;
+    padding: 5px 12px;
+}
+
+.signals-wrapper {
+  position: relative;
+}

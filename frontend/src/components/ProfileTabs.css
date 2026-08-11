@@ -1,0 +1,26 @@
+.profile-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid #07226b;
+}
+
+.profile-tab {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  font-size: 15px;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.profile-tab:hover {
+  color: #e5e7eb;
+}
+
+.profile-tab.active {
+  color: #c084fc;
+  border-bottom-color: #a855f7;
+  font-weight: 600;
+}
