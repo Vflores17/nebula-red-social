@@ -90,6 +90,9 @@ function Login() {
         )}
         <br />
         <p className="register-link">
+          ¿Olvidaste tu clave estelar? <Link to="/recuperar">Recupérala</Link>
+        </p>
+        <p className="register-link">
           ¿Eres nuevo en el cosmos? <Link to="/register">Regístrate</Link>
         </p>
       </div>
