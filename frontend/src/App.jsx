@@ -4,16 +4,16 @@ import Register from './pages/Register';
 import Feed from './pages/Feed';
 import Explorer from './pages/Explorer';
 import Profile from './pages/Profile';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/" element={<Feed />} />
-      <Route path="/explorar" element={<Explorer />} />
-      <Route path="/perfil" element={<Profile />} />
-      
+      <Route path="/" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
+      <Route path="/explorar" element={<ProtectedRoute><Explorer /></ProtectedRoute>} />
+      <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
     </Routes>
   );
 }
