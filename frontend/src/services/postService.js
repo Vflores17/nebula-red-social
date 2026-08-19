@@ -57,3 +57,17 @@ export const incrementarShares = async (postId) => {
     sharesNum: increment(1),
   });
 };
+
+export const incrementarDestellos = async (postId) => {
+  const docRef = doc(db, collectionString, postId);
+  return await updateDoc(docRef, {
+    destellosNum: increment(1),
+  });
+};
+
+export const decrementarDestellos = async (postId) => {
+  const docRef = doc(db, collectionString, postId);
+  return await updateDoc(docRef, {
+    destellosNum: increment(-1),
+  });
+};

@@ -2,10 +2,17 @@ import { useState, useEffect, useRef } from "react";
 import { getCommentsByPost, createComment } from "../services/commentService";
 import {
   deletePost,
+  decrementarDestellos,
   incrementarComentarios,
+  incrementarDestellos,
   incrementarShares,
   updatePost,
 } from "../services/postService";
+import {
+  getLikeByPostAndUser,
+  likePost,
+  unlikePost,
+} from "../services/likeService";
 import { createRepost, getUltimoRepost } from "../services/repostService";
 import { useAuth } from "../context/AuthContext";
 import { getProfileByIdCached } from "../services/userService";
@@ -32,7 +39,9 @@ const PostCard = ({
   const { user, userProfile } = useAuth();
   const esPropio = user?.uid === authorId;
   const [liked, setLiked] = useState(false);
-  const [destellosCount, setDestallosCount] = useState(destellosNum);
+  const [likeDocId, setLikeDocId] = useState(null);
+  const [procesandoLike, setProcesandoLike] = useState(true);
+  const [destellosCount, setDestallosCount] = useState(destellosNum || 0);
   const [shareCount, setShareCount] = useState(sharesNum);
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [editando, setEditando] = useState(false);
@@ -98,6 +107,40 @@ const PostCard = ({
     return () => { activo = false; };
   }, [authorId, nombre, handle, avatar]);
 
+  useEffect(() => {
+    let activo = true;
+
+    const cargarLike = async () => {
+      if (!user) {
+        if (activo) {
+          setLiked(false);
+          setLikeDocId(null);
+          setProcesandoLike(false);
+        }
+        return;
+      }
+
+      setProcesandoLike(true);
+      try {
+        const likeExistente = await getLikeByPostAndUser(id, user.uid);
+        if (!activo) return;
+
+        setLiked(Boolean(likeExistente));
+        setLikeDocId(likeExistente?.id || null);
+      } catch (error) {
+        console.error("Error al consultar el like:", error);
+        if (activo) {
+          setErrorAccion("No se pudo consultar el estado de tus destellos.");
+        }
+      } finally {
+        if (activo) setProcesandoLike(false);
+      }
+    };
+
+    cargarLike();
+    return () => { activo = false; };
+  }, [id, user]);
+
   // Al montar el componente, revisa si ya hay un cooldown activo de un repost anterior
   useEffect(() => {
     const revisarCooldown = async () => {
@@ -145,13 +188,39 @@ const PostCard = ({
     }
   };
 
-  const handleDestello = () => {
-    if (liked) {
-      setLiked(false);
-      setDestallosCount(destellosCount - 1);
-    } else {
-      setLiked(true);
-      setDestallosCount(destellosCount + 1);
+  const handleDestello = async () => {
+    if (!user || procesandoLike) return;
+
+    setProcesandoLike(true);
+    try {
+      if (liked) {
+        if (!likeDocId) throw new Error("No se encontró el documento del like.");
+
+        await unlikePost(likeDocId);
+        await decrementarDestellos(id);
+        setLiked(false);
+        setLikeDocId(null);
+        setDestallosCount((prev) => Math.max(0, prev - 1));
+      } else {
+        // Otra pestaña pudo crear el like después de la consulta inicial.
+        const likeExistente = await getLikeByPostAndUser(id, user.uid);
+        if (likeExistente) {
+          setLiked(true);
+          setLikeDocId(likeExistente.id);
+          return;
+        }
+
+        const nuevoLike = await likePost(id, user.uid);
+        await incrementarDestellos(id);
+        setLiked(true);
+        setLikeDocId(nuevoLike.id);
+        setDestallosCount((prev) => prev + 1);
+      }
+    } catch (error) {
+      console.error("Error al cambiar el like:", error);
+      setErrorAccion("No se pudo actualizar tu destello. Inténtalo de nuevo.");
+    } finally {
+      setProcesandoLike(false);
     }
   };
 
@@ -345,7 +414,12 @@ const PostCard = ({
         </div>
       )}
       <div className="options">
-        <button className={`btnDestellos ${liked ? "active" : ""}`} onClick={handleDestello}>
+        <button
+          className={`btnDestellos ${liked ? "active" : ""}`}
+          onClick={handleDestello}
+          disabled={procesandoLike || !user}
+          aria-pressed={liked}
+        >
           💫 {convertNum(destellosCount)}
         </button>
         <button className="btnComments" onClick={handleToggleComentarios}>

@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, updateDoc } from 'firebase/firestore'
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, updateDoc, where } from 'firebase/firestore'
 import {db} from '../config/firebase'
 const collectionString = 'like'
 
@@ -36,4 +36,27 @@ export const updateLike = async (id, documento) => {
 export const deleteLike = async id => {
     const docRef = doc(db,collectionString,id)
     return await deleteDoc(docRef)
+}
+
+// Busca el like directamente en Firestore sin descargar toda la colección.
+export const getLikeByPostAndUser = async (postId, userId) => {
+    const q = query(
+        collectionRef,
+        where('postId', '==', postId),
+        where('userId', '==', userId)
+    )
+    const snapshot = await getDocs(q)
+
+    if (snapshot.empty) return null
+
+    const docSnap = snapshot.docs[0]
+    return { id: docSnap.id, ...docSnap.data() }
+}
+
+export const likePost = async (postId, userId) => {
+    return await createLike({ postId, userId, createdAt: serverTimestamp() })
+}
+
+export const unlikePost = async likeDocId => {
+    return await deleteLike(likeDocId)
 }
