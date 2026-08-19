@@ -18,7 +18,13 @@ export const AuthProvider = ({ children }) => {
       try {
         if (firebaseUser) {
           const profileDocument = await getUserById(firebaseUser.uid);
-          setUserProfile(profileDocument?.data() || null);
+          const profileData = profileDocument?.data();
+
+          // Compatibilidad con usuarios existentes, creados cuando el campo se llamaba `rol`.
+          setUserProfile(profileData ? {
+            ...profileData,
+            role: profileData.role ?? profileData.rol ?? "user",
+          } : null);
         }
       } catch (error) {
         console.error("Error al cargar el perfil autenticado:", error);

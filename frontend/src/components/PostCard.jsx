@@ -38,6 +38,7 @@ const PostCard = ({
   sharesNum,
   visibility,
   onPostEliminado,
+  modoSoloLectura = false,
 }) => {
   const { user, userProfile } = useAuth();
   const esPropio = user?.uid === authorId;
@@ -119,6 +120,11 @@ const PostCard = ({
     let activo = true;
 
     const cargarLike = async () => {
+      if (modoSoloLectura) {
+        if (activo) setProcesandoLike(false);
+        return;
+      }
+
       if (!user) {
         if (activo) {
           setLiked(false);
@@ -147,12 +153,12 @@ const PostCard = ({
 
     cargarLike();
     return () => { activo = false; };
-  }, [id, user]);
+  }, [id, user, modoSoloLectura]);
 
   // Al montar el componente, revisa si ya hay un cooldown activo de un repost anterior
   useEffect(() => {
     const revisarCooldown = async () => {
-      if (!user) return;
+      if (!user || modoSoloLectura) return;
       const ultimoRepost = await getUltimoRepost(id, user.uid);
       if (!ultimoRepost || !ultimoRepost.createdAt) return;
 
@@ -170,7 +176,7 @@ const PostCard = ({
 
     // limpieza: si el componente se desmonta, detiene el contador para no dejarlo corriendo en el vacío
     return () => clearInterval(intervalRef.current);
-  }, [id, user]);
+  }, [id, user, modoSoloLectura]);
 
   const handleShares = async () => {
     if (compartiendo || segundosRestantes > 0 || !user || !userProfile) return;
@@ -383,7 +389,7 @@ const PostCard = ({
             )}
           </div>
         </div>
-        {esPropio && (
+        {esPropio && !modoSoloLectura && (
           <div className="post-owner-menu">
             <button
               type="button"
@@ -461,7 +467,7 @@ const PostCard = ({
           <img src={image} alt="Imagen del post" loading="lazy" />
         </div>
       )}
-      <div className="options">
+      {!modoSoloLectura && <div className="options">
         <button
           className={`btnDestellos ${liked ? "active" : ""}`}
           onClick={handleDestello}
@@ -490,7 +496,7 @@ const PostCard = ({
             🚩 Reportar
           </button>
         )}
-      </div>
+      </div>}
 
       {mostrarComentarios && (
         <div className="comments-panel">

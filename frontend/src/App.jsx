@@ -7,6 +7,7 @@ import Profile from './pages/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 import ForgotPassword from './pages/ForgotPassword';
 import AccountSettings from './pages/AccountSettings';
+import AdminPanel from './pages/AdminPanel';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
       <Route path="/explorar" element={<ProtectedRoute><Explorer /></ProtectedRoute>} />
       <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/configuracion" element={<ProtectedRoute><AccountSettings /></ProtectedRoute>} />
+      <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
     </Routes>
   );
 }
