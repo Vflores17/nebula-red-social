@@ -9,6 +9,7 @@ import { profile as profileMock } from "../mocks/profile";
 import { auth } from "../config/firebase";
 import { getById as getUserById } from "../services/userService";
 import { obtenerAmigos } from "../services/friendshipService";
+import { useAuth } from "../context/AuthContext";
 import { getAll, getById } from "../services/postService";
 import { getRepostsByUser } from "../services/repostService";
 import "./Profile.css";
@@ -17,12 +18,13 @@ const Profile = () => {
   const { uid: uidDeLaRuta } = useParams();
   const [activeTab, setActiveTab] = useState("transmisiones");
   const [misPosts, setMisPosts] = useState([]);
-  const [userProfile, setUserProfile] = useState(profileMock); // fallback mientras carga
+  const [userProfileState, setUserProfileState] = useState(profileMock); // fallback mientras carga
   const [amigos, setAmigos] = useState([]);
   const [cargandoAmigos, setCargandoAmigos] = useState(true);
   const [perfilNoEncontrado, setPerfilNoEncontrado] = useState(false);
+  const { user, userProfile } = useAuth();
 
-  const currentUserId = auth.currentUser?.uid;
+  const currentUserId = auth.currentUser?.uid || user?.uid;
   // Si la ruta trae un :uid (/perfil/:uid) mostramos ese perfil ajeno;
   // si no, mostramos el perfil del usuario logueado (/perfil).
   const targetUserId = uidDeLaRuta || currentUserId;
@@ -34,47 +36,72 @@ const Profile = () => {
 
     const cargarPerfil = async () => {
       setPerfilNoEncontrado(false);
-      const amigosIds = await obtenerAmigos(targetUserId);
+      try {
+        const amigosIds = await obtenerAmigos(targetUserId);
+        const docSnap = await getUserById(targetUserId);
+        const datos = docSnap?.data ? docSnap.data() : null;
 
-      const docSnap = await getUserById(targetUserId);
-      const datos = docSnap?.data ? docSnap.data() : null;
+        if (!datos) {
+          if (!esPropio) {
+            setPerfilNoEncontrado(true);
+          } else if (userProfile) {
+            setUserProfileState({
+              uid: currentUserId,
+              username: userProfile?.handle || userProfile?.username || "explorador",
+              displayName: userProfile?.nombrePlaneta || "Explorador",
+              avatar: userProfile?.avatar || null,
+              bio: userProfile?.biografia || "",
+              location: userProfile?.ubicacion || "",
+              joinedAt: userProfile?.createdAt?.toDate ? userProfile.createdAt.toDate().toLocaleDateString("es-CR", { month: "long", year: "numeric" }) : "",
+              satellites: userProfile?.satellites || amigosIds.length,
+              orbiting: userProfile?.orbiting || amigosIds.length,
+            });
+          }
+          return;
+        }
 
-      if (!datos) {
-        setPerfilNoEncontrado(true);
-        return;
+        setUserProfileState({
+          uid: targetUserId,
+          username: (datos?.nombrePlaneta || datos?.handle || "").toLowerCase().replace(/\s+/g, ""),
+          displayName: datos?.nombrePlaneta || "Sin nombre",
+          avatar: datos?.avatar || null,
+          bio: datos?.biografia || "",
+          location: datos?.ubicacion || "",
+          joinedAt: datos?.createdAt?.toDate
+            ? datos.createdAt.toDate().toLocaleDateString("es-ES", { month: "long", year: "numeric" })
+            : "recientemente",
+          satellites: amigosIds.length,
+          orbiting: amigosIds.length,
+        });
+      } catch (error) {
+        console.error("Error al cargar perfil:", error);
       }
-
-      setUserProfile({
-        uid: targetUserId,
-        username: (datos?.nombrePlaneta || "").toLowerCase().replace(/\s+/g, ""),
-        displayName: datos?.nombrePlaneta || "Sin nombre",
-        avatar: datos?.avatar || null,
-        bio: datos?.biografia || "",
-        location: datos?.ubicacion || "",
-        joinedAt: datos?.createdAt?.toDate
-          ? datos.createdAt.toDate().toLocaleDateString("es-ES", { month: "long", year: "numeric" })
-          : "recientemente",
-        satellites: amigosIds.length,
-        orbiting: amigosIds.length,
-      });
     };
 
     cargarPerfil();
-  }, [targetUserId]);
+  }, [targetUserId, userProfile, esPropio, currentUserId]);
 
   // 2. Cargar los posts del perfil objetivo (propios + reposts) usando su uid
   useEffect(() => {
     if (!targetUserId) return;
 
     const cargarTodo = async () => {
+      // 1. Posts creados directamente por el usuario objetivo
       const snapshot = await getAll();
       const todosLosPosts = snapshot.docs.map((docSnap) => ({
         id: docSnap.id,
         ...docSnap.data(),
         esRepost: false,
       }));
-      const propios = todosLosPosts.filter((post) => post.authorId === targetUserId);
+      
+      // Si el perfil es ajeno, filtramos los posts privados que no nos pertenecen
+      const propios = todosLosPosts.filter((post) => {
+        const esDelTarget = post.authorId === targetUserId;
+        const puedeVerPrivado = post.visibility !== "private" || post.authorId === currentUserId;
+        return esDelTarget && puedeVerPrivado;
+      });
 
+      // 2. Posts que retransmitió
       const repostsSnapshot = await getRepostsByUser(targetUserId);
       const repostsData = repostsSnapshot.docs.map((d) => d.data());
 
@@ -92,7 +119,10 @@ const Profile = () => {
         })
       );
 
-      const repostsValidos = repostsConPost.filter(Boolean);
+      // filtramos los que pudieron salir null (post original borrado) o privados de otra persona
+      const repostsValidos = repostsConPost.filter((post) => (
+        post && (post.visibility !== "private" || post.authorId === currentUserId)
+      ));
 
       const combinado = [...propios, ...repostsValidos].sort((a, b) => {
         const fechaA = a.esRepost ? a.repostCreatedAt : a.createdAt;
@@ -104,7 +134,7 @@ const Profile = () => {
     };
 
     cargarTodo();
-  }, [targetUserId]);
+  }, [targetUserId, currentUserId]);
 
   // 3. Cargar la lista de amigos del perfil objetivo con sus datos completos
   useEffect(() => {
@@ -112,30 +142,39 @@ const Profile = () => {
 
     const cargarAmigos = async () => {
       setCargandoAmigos(true);
-      const amigosIds = await obtenerAmigos(targetUserId);
+      try {
+        const amigosIds = await obtenerAmigos(targetUserId);
 
-      const amigosConDatos = await Promise.all(
-        amigosIds.map(async (uid) => {
-          const docSnap = await getUserById(uid);
-          const datos = docSnap?.data ? docSnap.data() : null;
-          if (!datos) return null;
+        const amigosConDatos = await Promise.all(
+          amigosIds.map(async (uid) => {
+            const docSnap = await getUserById(uid);
+            const datos = docSnap?.data ? docSnap.data() : null;
+            if (!datos) return null;
 
-          return {
-            uid,
-            nombre: datos.nombrePlaneta || "Sin nombre",
-            handle: (datos.nombrePlaneta || "").toLowerCase().replace(/\s+/g, ""),
-            avatar: datos.avatar || "#9ca3af",
-            bio: datos.biografia || "",
-          };
-        })
-      );
+            return {
+              uid,
+              nombre: datos.nombrePlaneta || "Sin nombre",
+              handle: (datos.nombrePlaneta || "").toLowerCase().replace(/\s+/g, ""),
+              avatar: datos.avatar || "#9ca3af",
+              bio: datos.biografia || "",
+            };
+          })
+        );
 
-      setAmigos(amigosConDatos.filter(Boolean));
-      setCargandoAmigos(false);
+        setAmigos(amigosConDatos.filter(Boolean));
+      } catch (error) {
+        console.error("Error al cargar amigos:", error);
+      } finally {
+        setCargandoAmigos(false);
+      }
     };
 
     cargarAmigos();
   }, [targetUserId]);
+
+  const handlePostEliminado = (postId) => {
+    setMisPosts((postsActuales) => postsActuales.filter((post) => post.id !== postId));
+  };
 
   if (perfilNoEncontrado) {
     return (
@@ -160,12 +199,13 @@ const Profile = () => {
         </Link>
 
         <ProfileHeader
-          profile={userProfile}
+          profile={userProfileState}
           isOwnProfile={esPropio}
           onProfileUpdate={(datosActualizados) =>
-            setUserProfile((prev) => ({ ...prev, ...datosActualizados }))
+            setUserProfileState((prev) => ({ ...prev, ...datosActualizados }))
           }
         />
+        
         <ProfileTabs activeTab={activeTab} onChange={setActiveTab} />
 
         <div className="planeta-tab-content">
@@ -186,29 +226,31 @@ const Profile = () => {
                     avatar={post.avatar}
                     description={post.description}
                     image={post.image}
+                    linkUrl={post.linkUrl}
                     timeAgo={post.createdAt?.toDate?.() || new Date()}
                     destellosNum={post.destellosNum}
                     commentsNum={post.commentsNum}
                     sharesNum={post.sharesNum}
+                    visibility={post.visibility}
+                    onPostEliminado={handlePostEliminado}
                   />
                 </div>
               ))
             ))}
 
-          {(activeTab === "planetas" || activeTab === "orbitando") &&
-            (cargandoAmigos ? (
-              <p className="empty-state">Cargando...</p>
-            ) : amigos.length === 0 ? (
-              <p className="empty-state">
-                {activeTab === "planetas"
-                  ? "No orbita ningún planeta aún"
-                  : "Nadie orbita este planeta aún"}
-              </p>
-            ) : (
-              amigos.map((amigo) => (
-                <SuggestedPlanet key={amigo.uid} {...amigo} />
-              ))
-            ))}
+          {activeTab === "satelites" && (
+            <div className="content-planets">
+              {cargandoAmigos ? (
+                <p className="empty-state">Cargando órbitas...</p>
+              ) : amigos.length === 0 ? (
+                <p className="empty-state">Este planeta aún no tiene satélites en órbita.</p>
+              ) : (
+                amigos.map((amigo) => (
+                  <SuggestedPlanet key={amigo.uid} {...amigo} />
+                ))
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
