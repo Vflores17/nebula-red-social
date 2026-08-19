@@ -35,17 +35,13 @@ export const createPost = async documento => await addDoc(collectionRef, {
 //UPDATE
 export const updatePost = async (id, documento) => {
     const docRef = doc(db,collectionString,id)
-
-    if (docRef.exists) 
-        return await updateDoc(docRef, documento)
+    return await updateDoc(docRef, documento)
 }
 
 //DELETE
 export const deletePost = async id => {
     const docRef = doc(db,collectionString,id)
-
-    if (docRef.exists) 
-        return await deleteDoc(docRef)
+    return await deleteDoc(docRef)
 }
 
 export const incrementarComentarios = async (postId) => {

@@ -28,6 +28,10 @@ export default function Feed() {
     cargarPosts();
   }, []); // se ejecuta una sola vez, al entrar al Feed
 
+  const handlePostEliminado = (postId) => {
+    setPosts((postsActuales) => postsActuales.filter((post) => post.id !== postId));
+  };
+
   return (
     <div className="feed-page">
       <div className="stars"></div>
@@ -39,6 +43,7 @@ export default function Feed() {
             <PostCard
               key={post.id}
               id={post.id}
+              authorId={post.authorId}
               nombre={post.nombre}
               handle={post.handle}
               avatar={post.avatar}
@@ -48,6 +53,7 @@ export default function Feed() {
               destellosNum={post.destellosNum}
               commentsNum={post.commentsNum}
               sharesNum={post.sharesNum}
+              onPostEliminado={handlePostEliminado}
             />
           ))}
         </div>
