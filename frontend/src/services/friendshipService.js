@@ -14,7 +14,7 @@ export const getAll = async ()=>{
 
 export const getById = async id =>{
     const document = await getDoc(doc(db,collectionString,id))
-    if (document.exists) return document
+    if (document.exists()) return document
     return null
 }
 
@@ -22,13 +22,11 @@ export const createFriendship = async document => await addDoc(collectionRef,doc
 
 export const updateFriendship = async (id, documento) => {
     const docRef = doc(db,collectionString,id)
-    if (docRef.exists)
         return await updateDoc(docRef,documento)
 }
 
 export const deleteFriendship = async id => {
     const docRef = doc(db,collectionString,id)
-    if (docRef.exists)
         return await deleteDoc(docRef)
 }
 

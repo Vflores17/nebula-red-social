@@ -11,12 +11,74 @@
     margin: 8px;
     border-radius: 20px;
     background-color: rgb(2, 14, 47,0.8);
+    box-sizing: border-box;
+    overflow: hidden;
     
 }
 
 .imgPost {
+    box-sizing: border-box;
     width: 100%;
+    max-width: 100%;
     align-self: stretch;
+    overflow: hidden;
+}
+
+.card-post .imgPost img {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+.card-post > .post-video-embed {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    align-self: stretch;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    background: var(--bg-dark);
+}
+
+.card-post .post-video-embed iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.card-post > .post-link-preview {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+    gap: 4px;
+    min-width: 0;
+    padding: 12px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    text-decoration: none;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.card-post > .post-link-preview:hover,
+.card-post > .post-link-preview:focus-visible {
+    border-color: var(--purple-primary);
+    outline: none;
+    transform: translateY(-1px);
+}
+
+.post-link-url {
+    overflow: hidden;
+    color: var(--text-secondary);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .avatar{
@@ -24,14 +86,36 @@
     height: 60px;
     border-radius: 50%;
     flex-shrink: 0;
+    overflow: hidden;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .infoPublish{
     display: flex;
 }
+
+.post-private-badge {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 8px;
+    padding: 2px 7px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+    font-size: 11px;
+}
 .header{
     display: flex;
     flex-direction: row;
+    width: 100%;
+    position: relative;
 }
 .info{
     display: flex;
@@ -169,4 +253,112 @@ justify-content: space-around;
 .comment-text {
   font-size: 14px;
   color: #d1d5db;
+}
+
+.post-owner-menu {
+  margin-left: auto;
+  position: relative;
+}
+
+.post-menu-trigger {
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+  padding: 4px 10px;
+}
+
+.post-menu-trigger:hover,
+.post-menu-trigger:focus-visible {
+  background: var(--bg-card);
+  outline: 1px solid var(--purple-primary);
+}
+
+.post-menu-options {
+  position: absolute;
+  z-index: 2;
+  top: 34px;
+  right: 0;
+  min-width: 120px;
+  padding: 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-dark);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.post-menu-options button {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.post-menu-options button:hover {
+  background: var(--bg-card);
+}
+
+.post-menu-options .delete-option {
+  color: #fca5a5;
+}
+
+.post-edit-form {
+  align-self: stretch;
+}
+
+.post-edit-form textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 90px;
+  resize: vertical;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.post-edit-form textarea:focus {
+  border-color: var(--purple-primary);
+  outline: none;
+}
+
+.post-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.post-edit-actions button {
+  padding: 7px 14px;
+  border: 1px solid var(--purple-primary);
+  border-radius: 18px;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.post-edit-actions button:first-child {
+  background: var(--purple-primary);
+}
+
+.post-edit-actions button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.post-edit-error {
+  margin: 6px 0 0;
+  color: #fca5a5;
+  font-size: 13px;
 }

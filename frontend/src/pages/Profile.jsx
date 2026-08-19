@@ -4,7 +4,7 @@ import Navbar from "../components/Navbar";
 import ProfileHeader from "../components/ProfileHeader";
 import ProfileTabs from "../components/ProfileTabs";
 import PostCard from "../components/PostCard";
-import { profile } from "../mocks/profile";
+import { useAuth } from "../context/AuthContext";
 import { getAll, getById } from "../services/postService";
 import { getRepostsByUser } from "../services/repostService";
 import "./Profile.css";
@@ -12,10 +12,11 @@ import "./Profile.css";
 const Profile = () => {
   const [activeTab, setActiveTab] = useState("transmisiones");
   const [misPosts, setMisPosts] = useState([]);
-  const [userProfile, setUserProfile] = useState(profile);
+  const { user, userProfile } = useAuth();
 
   useEffect(() => {
     const cargarTodo = async () => {
+      if (!user) return;
       // 1. Posts que yo escribí directamente
       const snapshot = await getAll();
       const todosLosPosts = snapshot.docs.map((docSnap) => ({
@@ -23,10 +24,10 @@ const Profile = () => {
         ...docSnap.data(),
         esRepost: false,
       }));
-      const propios = todosLosPosts.filter((post) => post.authorId === userProfile.uid);
+      const propios = todosLosPosts.filter((post) => post.authorId === user.uid);
 
       // 2. Posts que yo retransmití (aunque no sean míos originalmente)
-      const repostsSnapshot = await getRepostsByUser(userProfile.uid);
+      const repostsSnapshot = await getRepostsByUser(user.uid);
       const repostsData = repostsSnapshot.docs.map((d) => d.data());
 
       // Para cada repost, traemos el post ORIGINAL completo con getById
@@ -45,7 +46,9 @@ const Profile = () => {
       );
 
       // filtramos los que pudieron salir null (post original borrado)
-      const repostsValidos = repostsConPost.filter(Boolean);
+      const repostsValidos = repostsConPost.filter((post) => (
+        post && (post.visibility !== "private" || post.authorId === user.uid)
+      ));
 
       // 3. Combinamos ambas listas y ordenamos por fecha relevante
       const combinado = [...propios, ...repostsValidos].sort((a, b) => {
@@ -58,7 +61,11 @@ const Profile = () => {
     };
 
     cargarTodo();
-  }, []);
+  }, [user]);
+
+  const handlePostEliminado = (postId) => {
+    setMisPosts((postsActuales) => postsActuales.filter((post) => post.id !== postId));
+  };
 
   return (
     <div className="planeta-page">
@@ -68,7 +75,16 @@ const Profile = () => {
           ← Volver al Cosmos
         </Link>
 
-        <ProfileHeader profile={userProfile} />
+        <ProfileHeader profile={{
+          avatar: userProfile?.avatar || "",
+          displayName: userProfile?.nombrePlaneta || "Explorador",
+          username: userProfile?.handle || userProfile?.username || userProfile?.nombrePlaneta || "explorador",
+          bio: userProfile?.biografia || "",
+          location: userProfile?.ubicacion || "",
+          joinedAt: userProfile?.createdAt?.toDate?.().toLocaleDateString("es-CR", { month: "long", year: "numeric" }) || "",
+          satellites: userProfile?.satellites || 0,
+          orbiting: userProfile?.orbiting || 0,
+        }} />
         <ProfileTabs activeTab={activeTab} onChange={setActiveTab} />
 
         <div className="planeta-tab-content">
@@ -83,15 +99,19 @@ const Profile = () => {
                   )}
                   <PostCard
                     id={post.id}
+                    authorId={post.authorId}
                     nombre={post.nombre}
                     handle={post.handle}
                     avatar={post.avatar}
                     description={post.description}
                     image={post.image}
+                    linkUrl={post.linkUrl}
                     timeAgo={post.createdAt?.toDate?.() || new Date()}
                     destellosNum={post.destellosNum}
                     commentsNum={post.commentsNum}
                     sharesNum={post.sharesNum}
+                    visibility={post.visibility}
+                    onPostEliminado={handlePostEliminado}
                   />
                 </div>
               ))

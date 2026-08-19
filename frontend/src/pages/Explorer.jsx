@@ -1,4 +1,4 @@
-import { useState, useEffect, useEffectEvent } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import PostCard from "../components/PostCard";
 import BarSearch from "../components/BarSearch";
@@ -6,12 +6,14 @@ import SearchTabs from "../components/SearchTabs";
 import { planetas } from "../mocks/planets";
 import { getAll } from "../services/postService";
 import SuggestedPlanet from "../components/SuggestedPlanet";
+import { useAuth } from "../context/AuthContext";
 import "./Explorer.css";
 
 const Explorer = () => {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("todo");
   const [posts, setPosts] = useState([]);
+  const { user } = useAuth();
 
   useEffect(() => {
     const cargarPosts = async () => {
@@ -55,7 +57,10 @@ const Explorer = () => {
     filtrarPlanetas(planeta, search),
   );
 
-  const resultadosPosts = posts.filter((post) => filtrarPosts(post, search));
+  const resultadosPosts = posts.filter((post) => {
+    const puedeVerPost = post.visibility !== "private" || post.authorId === user?.uid;
+    return puedeVerPost && filtrarPosts(post, search);
+  });
 
 
   return (

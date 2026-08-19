@@ -1,27 +1,64 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getCommentsByPost, createComment } from "../services/commentService";
-import { incrementarComentarios, incrementarShares } from "../services/postService";
+import {
+  deletePost,
+  decrementarDestellos,
+  incrementarComentarios,
+  incrementarDestellos,
+  incrementarShares,
+  updatePost,
+} from "../services/postService";
+import {
+  getLikeByPostAndUser,
+  likePost,
+  unlikePost,
+} from "../services/likeService";
 import { createRepost, getUltimoRepost } from "../services/repostService";
-import { usuarioActivo } from "../mocks/demoUsers";
+import { useAuth } from "../context/AuthContext";
+import { getProfileByIdCached } from "../services/userService";
+import ConfirmModal from "./ConfirmModal";
+import { getVimeoId, getYoutubeId, parseHttpUrl } from "../utils/linkParser";
 import "./PostCard.css";
 
 const COOLDOWN_SEGUNDOS = 30; // tiempo de espera entre retransmisiones del mismo post
 
 const PostCard = ({
   id,
+  authorId,
   nombre,
   handle,
   avatar,
   description,
   image,
+  linkUrl,
   timeAgo,
   destellosNum,
   commentsNum,
   sharesNum,
+  visibility,
+  onPostEliminado,
 }) => {
+  const { user, userProfile } = useAuth();
+  const esPropio = user?.uid === authorId;
   const [liked, setLiked] = useState(false);
-  const [destellosCount, setDestallosCount] = useState(destellosNum);
+  const [likeDocId, setLikeDocId] = useState(null);
+  const [procesandoLike, setProcesandoLike] = useState(true);
+  const [destellosCount, setDestallosCount] = useState(destellosNum || 0);
   const [shareCount, setShareCount] = useState(sharesNum);
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const [editando, setEditando] = useState(false);
+  const [descripcionActual, setDescripcionActual] = useState(description);
+  const [descripcionEditada, setDescripcionEditada] = useState(description);
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
+  const [mostrarConfirmGuardar, setMostrarConfirmGuardar] = useState(false);
+  const [mostrarConfirmEliminar, setMostrarConfirmEliminar] = useState(false);
+  const [errorAccion, setErrorAccion] = useState("");
+  const [errorEdicion, setErrorEdicion] = useState("");
+  const [autorActual, setAutorActual] = useState({ nombre, handle, avatar });
+  const youtubeId = linkUrl ? getYoutubeId(linkUrl) : null;
+  const vimeoId = linkUrl ? getVimeoId(linkUrl) : null;
+  const parsedLink = linkUrl ? parseHttpUrl(linkUrl) : null;
 
   // --- Estado de comentarios (ya lo tenías) ---
   const [mostrarComentarios, setMostrarComentarios] = useState(false);
@@ -34,28 +71,6 @@ const PostCard = ({
   const [compartiendo, setCompartiendo] = useState(false); // mientras se guarda en Firestore
   const [segundosRestantes, setSegundosRestantes] = useState(0); // cooldown activo
   const intervalRef = useRef(null); // para poder limpiar el setInterval del cooldown
-
-  // Al montar el componente, revisa si ya hay un cooldown activo de un repost anterior
-  useEffect(() => {
-    const revisarCooldown = async () => {
-      const ultimoRepost = await getUltimoRepost(id, usuarioActivo.authorId);
-      if (!ultimoRepost || !ultimoRepost.createdAt) return;
-
-      const segundosDesdeRepost = Math.floor(
-        (Date.now() - ultimoRepost.createdAt.toDate().getTime()) / 1000
-      );
-      const restante = COOLDOWN_SEGUNDOS - segundosDesdeRepost;
-
-      if (restante > 0) {
-        iniciarCooldown(restante);
-      }
-    };
-
-    revisarCooldown();
-
-    // limpieza: si el componente se desmonta, detiene el contador para no dejarlo corriendo en el vacío
-    return () => clearInterval(intervalRef.current);
-  }, []);
 
   /**
    * Arranca (o reanuda) la cuenta regresiva visual del cooldown.
@@ -74,17 +89,97 @@ const PostCard = ({
     }, 1000);
   };
 
+  useEffect(() => {
+    let activo = true;
+
+    const cargarAutorActual = async () => {
+      try {
+        const perfil = await getProfileByIdCached(authorId);
+        if (!activo || !perfil) return;
+
+        setAutorActual({
+          nombre: perfil.nombrePlaneta || perfil.nombre || nombre,
+          handle: perfil.handle || perfil.username || perfil.nombrePlaneta || handle,
+          avatar: perfil.avatar || avatar,
+        });
+      } catch (error) {
+        // Los posts huérfanos conservan sus datos embebidos como fallback.
+        console.error("Error al cargar el autor actual del post:", error);
+      }
+    };
+
+    cargarAutorActual();
+    return () => { activo = false; };
+  }, [authorId, nombre, handle, avatar]);
+
+  useEffect(() => {
+    let activo = true;
+
+    const cargarLike = async () => {
+      if (!user) {
+        if (activo) {
+          setLiked(false);
+          setLikeDocId(null);
+          setProcesandoLike(false);
+        }
+        return;
+      }
+
+      setProcesandoLike(true);
+      try {
+        const likeExistente = await getLikeByPostAndUser(id, user.uid);
+        if (!activo) return;
+
+        setLiked(Boolean(likeExistente));
+        setLikeDocId(likeExistente?.id || null);
+      } catch (error) {
+        console.error("Error al consultar el like:", error);
+        if (activo) {
+          setErrorAccion("No se pudo consultar el estado de tus destellos.");
+        }
+      } finally {
+        if (activo) setProcesandoLike(false);
+      }
+    };
+
+    cargarLike();
+    return () => { activo = false; };
+  }, [id, user]);
+
+  // Al montar el componente, revisa si ya hay un cooldown activo de un repost anterior
+  useEffect(() => {
+    const revisarCooldown = async () => {
+      if (!user) return;
+      const ultimoRepost = await getUltimoRepost(id, user.uid);
+      if (!ultimoRepost || !ultimoRepost.createdAt) return;
+
+      const segundosDesdeRepost = Math.floor(
+        (Date.now() - ultimoRepost.createdAt.toDate().getTime()) / 1000
+      );
+      const restante = COOLDOWN_SEGUNDOS - segundosDesdeRepost;
+
+      if (restante > 0) {
+        iniciarCooldown(restante);
+      }
+    };
+
+    revisarCooldown();
+
+    // limpieza: si el componente se desmonta, detiene el contador para no dejarlo corriendo en el vacío
+    return () => clearInterval(intervalRef.current);
+  }, [id, user]);
+
   const handleShares = async () => {
-    if (compartiendo || segundosRestantes > 0) return; // bloqueado mientras carga o en cooldown
+    if (compartiendo || segundosRestantes > 0 || !user || !userProfile) return;
 
     setCompartiendo(true);
     try {
       await createRepost({
         originalPostId: id,
-        repostedBy: usuarioActivo.authorId,
-        nombre: usuarioActivo.nombre,
-        handle: usuarioActivo.handle,
-        avatar: usuarioActivo.avatar,
+        repostedBy: user.uid,
+        nombre: userProfile.nombrePlaneta,
+        handle: userProfile.handle || userProfile.username || userProfile.nombrePlaneta,
+        avatar: userProfile.avatar || "",
       });
 
       await incrementarShares(id);
@@ -98,13 +193,102 @@ const PostCard = ({
     }
   };
 
-  const handleDestello = () => {
-    if (liked) {
-      setLiked(false);
-      setDestallosCount(destallosCount - 1);
-    } else {
-      setLiked(true);
-      setDestallosCount(destallosCount + 1);
+  const handleDestello = async () => {
+    if (!user || procesandoLike) return;
+
+    setProcesandoLike(true);
+    try {
+      if (liked) {
+        if (!likeDocId) throw new Error("No se encontró el documento del like.");
+
+        await unlikePost(likeDocId);
+        await decrementarDestellos(id);
+        setLiked(false);
+        setLikeDocId(null);
+        setDestallosCount((prev) => Math.max(0, prev - 1));
+      } else {
+        // Otra pestaña pudo crear el like después de la consulta inicial.
+        const likeExistente = await getLikeByPostAndUser(id, user.uid);
+        if (likeExistente) {
+          setLiked(true);
+          setLikeDocId(likeExistente.id);
+          return;
+        }
+
+        const nuevoLike = await likePost(id, user.uid);
+        await incrementarDestellos(id);
+        setLiked(true);
+        setLikeDocId(nuevoLike.id);
+        setDestallosCount((prev) => prev + 1);
+      }
+    } catch (error) {
+      console.error("Error al cambiar el like:", error);
+      setErrorAccion("No se pudo actualizar tu destello. Inténtalo de nuevo.");
+    } finally {
+      setProcesandoLike(false);
+    }
+  };
+
+  const handleEditar = () => {
+    setDescripcionEditada(descripcionActual);
+    setErrorEdicion("");
+    setEditando(true);
+    setMenuAbierto(false);
+  };
+
+  const handleCancelarEdicion = () => {
+    setDescripcionEditada(descripcionActual);
+    setErrorEdicion("");
+    setEditando(false);
+  };
+
+  const handleSolicitarGuardar = () => {
+    const nuevoTexto = descripcionEditada.trim();
+    if (!nuevoTexto) {
+      setErrorEdicion("La publicación no puede quedar vacía.");
+      return;
+    }
+
+    setErrorEdicion("");
+    setMostrarConfirmGuardar(true);
+  };
+
+  const handleConfirmarGuardar = async () => {
+    const nuevoTexto = descripcionEditada.trim();
+    setGuardandoEdicion(true);
+    setErrorEdicion("");
+    try {
+      await updatePost(id, { description: nuevoTexto });
+      setDescripcionActual(nuevoTexto);
+      setDescripcionEditada(nuevoTexto);
+      setEditando(false);
+      setMostrarConfirmGuardar(false);
+    } catch (error) {
+      console.error("Error al editar la publicación:", error);
+      setMostrarConfirmGuardar(false);
+      setErrorAccion("No se pudo guardar el cambio. Inténtalo de nuevo.");
+    } finally {
+      setGuardandoEdicion(false);
+    }
+  };
+
+  const handleSolicitarEliminar = () => {
+    setMenuAbierto(false);
+    setMostrarConfirmEliminar(true);
+  };
+
+  const handleConfirmarEliminar = async () => {
+    setEliminando(true);
+    try {
+      await deletePost(id);
+      setMostrarConfirmEliminar(false);
+      onPostEliminado?.(id);
+    } catch (error) {
+      console.error("Error al eliminar la publicación:", error);
+      setMostrarConfirmEliminar(false);
+      setErrorAccion("No se pudo eliminar la publicación. Inténtalo de nuevo.");
+    } finally {
+      setEliminando(false);
     }
   };
 
@@ -145,15 +329,15 @@ const PostCard = ({
   };
 
   const handleEnviarComentario = async () => {
-    if (nuevoComentario.trim() === "") return;
+    if (nuevoComentario.trim() === "" || !user || !userProfile) return;
     try {
       await createComment({
         postId: id,
         text: nuevoComentario.trim(),
-        authorId: usuarioActivo.authorId,
-        nombre: usuarioActivo.nombre,
-        handle: usuarioActivo.handle,
-        avatar: usuarioActivo.avatar,
+        authorId: user.uid,
+        nombre: userProfile.nombrePlaneta,
+        handle: userProfile.handle || userProfile.username || userProfile.nombrePlaneta,
+        avatar: userProfile.avatar || "",
       });
       await incrementarComentarios(id);
       setNuevoComentario("");
@@ -167,22 +351,109 @@ const PostCard = ({
   return (
     <div className="card-post">
       <div className="header">
-        <div className="avatar" style={{ backgroundColor: avatar }}></div>
+        <div className="avatar" style={{ backgroundColor: autorActual.avatar }}>
+          {autorActual.avatar?.startsWith?.("http") && (
+            <img src={autorActual.avatar} alt={`Avatar de ${autorActual.nombre}`} />
+          )}
+        </div>
         <div className="info">
-          <div className="nombrePlanet">{nombre}</div>
+          <div className="nombrePlanet">{autorActual.nombre}</div>
           <div className="infoPublish">
-            <span>@{handle} ● {timePublished(timeAgo)}</span>
+            <span>
+              @{autorActual.handle} ● {timePublished(timeAgo)}
+              {visibility === "private" && (
+                <span className="post-private-badge" title="Publicación privada">
+                  🔒 Privado
+                </span>
+              )}
+            </span>
           </div>
         </div>
+        {esPropio && (
+          <div className="post-owner-menu">
+            <button
+              type="button"
+              className="post-menu-trigger"
+              aria-label="Opciones de la publicación"
+              aria-expanded={menuAbierto}
+              onClick={() => setMenuAbierto((abierto) => !abierto)}
+              disabled={eliminando}
+            >
+              ⋯
+            </button>
+            {menuAbierto && (
+              <div className="post-menu-options">
+                <button type="button" onClick={handleEditar}>Editar</button>
+                <button type="button" className="delete-option" onClick={handleSolicitarEliminar}>
+                  Eliminar
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
-      <div className="description">{description}</div>
+      {editando ? (
+        <div className="post-edit-form">
+          <textarea
+            value={descripcionEditada}
+            onChange={(event) => setDescripcionEditada(event.target.value)}
+            disabled={guardandoEdicion}
+            autoFocus
+          />
+          {errorEdicion && <p className="post-edit-error">{errorEdicion}</p>}
+          <div className="post-edit-actions">
+            <button type="button" onClick={handleSolicitarGuardar} disabled={guardandoEdicion}>
+              {guardandoEdicion ? "Guardando..." : "Guardar"}
+            </button>
+            <button type="button" onClick={handleCancelarEdicion} disabled={guardandoEdicion}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="description">{descripcionActual}</div>
+      )}
+      {youtubeId ? (
+        <div className="post-video-embed">
+          <iframe
+            src={`https://www.youtube.com/embed/${youtubeId}`}
+            title="Video de YouTube"
+            allowFullScreen
+            loading="lazy"
+          />
+        </div>
+      ) : vimeoId ? (
+        <div className="post-video-embed">
+          <iframe
+            src={`https://player.vimeo.com/video/${vimeoId}`}
+            title="Video de Vimeo"
+            allowFullScreen
+            loading="lazy"
+          />
+        </div>
+      ) : parsedLink ? (
+        <a
+          href={parsedLink.href}
+          target="_blank"
+          rel="noreferrer"
+          className="post-link-preview"
+        >
+          <span>🔗 {parsedLink.hostname}</span>
+          <span className="post-link-url">{parsedLink.href}</span>
+        </a>
+      ) : null}
       {image && (
         <div className="imgPost">
           <img src={image} alt="Imagen del post" loading="lazy" />
         </div>
       )}
       <div className="options">
-        <button className={`btnDestellos ${liked ? "active" : ""}`} onClick={handleDestello}>
+        <button
+          className={`btnDestellos ${liked ? "active" : ""}`}
+          onClick={handleDestello}
+          disabled={procesandoLike || !user}
+          aria-pressed={liked}
+        >
           💫 {convertNum(destellosCount)}
         </button>
         <button className="btnComments" onClick={handleToggleComentarios}>
@@ -230,6 +501,37 @@ const PostCard = ({
           )}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={mostrarConfirmGuardar}
+        title="¿Guardar cambios?"
+        message="Se actualizará el texto de esta publicación."
+        confirmLabel="Guardar"
+        loading={guardandoEdicion}
+        onConfirm={handleConfirmarGuardar}
+        onClose={() => setMostrarConfirmGuardar(false)}
+      />
+
+      <ConfirmModal
+        isOpen={mostrarConfirmEliminar}
+        title="¿Eliminar publicación?"
+        message="Esta acción no se puede deshacer."
+        confirmLabel="Eliminar"
+        danger
+        loading={eliminando}
+        onConfirm={handleConfirmarEliminar}
+        onClose={() => setMostrarConfirmEliminar(false)}
+      />
+
+      <ConfirmModal
+        isOpen={Boolean(errorAccion)}
+        title="No se pudo completar la acción"
+        message={errorAccion}
+        confirmLabel="Entendido"
+        cancelLabel=""
+        onConfirm={() => setErrorAccion("")}
+        onClose={() => setErrorAccion("")}
+      />
     </div>
   );
 };
