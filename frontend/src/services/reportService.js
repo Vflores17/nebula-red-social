@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, updateDoc } from 'firebase/firestore'
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, serverTimestamp, updateDoc } from 'firebase/firestore'
 import {db} from '../config/firebase'
 const collectionString = 'report'
 
@@ -36,4 +36,30 @@ export const updateReport = async (id, documento) => {
 export const deleteReport = async id => {
     const docRef = doc(db,collectionString,id)
     return await deleteDoc(docRef)
+}
+
+export const reportPost = async (reporterId, postId, reason) => {
+    return await createReport({
+        reporterId,
+        targetType: 'post',
+        targetId: postId,
+        reason: reason.trim(),
+        status: 'pending',
+        createdAt: serverTimestamp(),
+    })
+}
+
+export const reportUser = async (reporterId, targetUid, reason) => {
+    if (reporterId === targetUid) {
+        throw new Error('No puedes reportarte a ti mismo.')
+    }
+
+    return await createReport({
+        reporterId,
+        targetType: 'user',
+        targetId: targetUid,
+        reason: reason.trim(),
+        status: 'pending',
+        createdAt: serverTimestamp(),
+    })
 }
