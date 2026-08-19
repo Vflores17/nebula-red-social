@@ -17,6 +17,7 @@ import { createRepost, getUltimoRepost } from "../services/repostService";
 import { useAuth } from "../context/AuthContext";
 import { getProfileByIdCached } from "../services/userService";
 import ConfirmModal from "./ConfirmModal";
+import ReportModal from "./ReportModal";
 import { getVimeoId, getYoutubeId, parseHttpUrl } from "../utils/linkParser";
 import "./PostCard.css";
 
@@ -41,6 +42,7 @@ const PostCard = ({
 }) => {
   const { user, userProfile } = useAuth();
   const esPropio = user?.uid === authorId;
+  const puedeReportar = Boolean(user && authorId && !esPropio);
   const [liked, setLiked] = useState(false);
   const [likeDocId, setLikeDocId] = useState(null);
   const [procesandoLike, setProcesandoLike] = useState(true);
@@ -57,6 +59,7 @@ const PostCard = ({
   const [errorAccion, setErrorAccion] = useState("");
   const [errorEdicion, setErrorEdicion] = useState("");
   const [autorActual, setAutorActual] = useState({ nombre, handle, avatar });
+  const [reporteTarget, setReporteTarget] = useState(null);
   const youtubeId = linkUrl ? getYoutubeId(linkUrl) : null;
   const vimeoId = linkUrl ? getVimeoId(linkUrl) : null;
   const parsedLink = linkUrl ? parseHttpUrl(linkUrl) : null;
@@ -373,6 +376,17 @@ const PostCard = ({
                 </span>
               )}
             </span>
+            {puedeReportar && (
+              <button
+                type="button"
+                className="report-author-button"
+                aria-label={`Reportar al autor ${autorActual.nombre}`}
+                title="Reportar autor"
+                onClick={() => setReporteTarget({ type: "user", id: authorId })}
+              >
+                🚩
+              </button>
+            )}
           </div>
         </div>
         {esPropio && !modoSoloLectura && (
@@ -473,6 +487,15 @@ const PostCard = ({
           📡 {convertNum(shareCount)}
           {segundosRestantes > 0 && <span className="cooldown-text"> ({segundosRestantes}s)</span>}
         </button>
+        {puedeReportar && (
+          <button
+            type="button"
+            className="btnReport"
+            onClick={() => setReporteTarget({ type: "post", id })}
+          >
+            🚩 Reportar
+          </button>
+        )}
       </div>}
 
       {mostrarComentarios && (
@@ -538,6 +561,14 @@ const PostCard = ({
         onConfirm={() => setErrorAccion("")}
         onClose={() => setErrorAccion("")}
       />
+
+      {reporteTarget && (
+        <ReportModal
+          targetType={reporteTarget.type}
+          targetId={reporteTarget.id}
+          onClose={() => setReporteTarget(null)}
+        />
+      )}
     </div>
   );
 };
