@@ -9,6 +9,7 @@ const Composer = ({ onPostCreado }) => {
   const [texto, setTexto] = useState("");
   const [imagenFile, setImagenFile] = useState(null); // el archivo real seleccionado
   const [previewUrl, setPreviewUrl] = useState(null); // preview local, antes de subir
+  const [visibility, setVisibility] = useState("public");
   const [enviando, setEnviando] = useState(false);
   const fileInputRef = useRef(null); // para "clickear" el input escondido
 
@@ -43,12 +44,14 @@ const Composer = ({ onPostCreado }) => {
         nombre: userProfile.nombrePlaneta,
         handle: userProfile.handle || userProfile.username || userProfile.nombrePlaneta,
         avatar: userProfile.avatar || "",
+        visibility,
       });
 
       // limpia todo después de publicar
       setTexto("");
       setImagenFile(null);
       setPreviewUrl(null);
+      setVisibility("public");
       onPostCreado?.();
     } catch (error) {
       console.error("Error al publicar:", error);
@@ -91,11 +94,25 @@ const Composer = ({ onPostCreado }) => {
           />
 
           {/* botón visible que "activa" el input escondido */}
-          <div
-            className="card-import"
-            onClick={() => fileInputRef.current.click()}
-          >
-            📎
+          <div className="composer-footer-tools">
+            <button
+              type="button"
+              className="card-import"
+              aria-label="Adjuntar imagen"
+              onClick={() => fileInputRef.current.click()}
+            >
+              📎
+            </button>
+            <select
+              className="composer-visibility"
+              value={visibility}
+              onChange={(event) => setVisibility(event.target.value)}
+              aria-label="Visibilidad de la publicación"
+              disabled={enviando}
+            >
+              <option value="public">🌍 Público</option>
+              <option value="private">🔒 Privado</option>
+            </select>
           </div>
 
           <button onClick={handleTransmitir} disabled={enviando || !userProfile}>

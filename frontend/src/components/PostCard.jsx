@@ -26,6 +26,7 @@ const PostCard = ({
   destellosNum,
   commentsNum,
   sharesNum,
+  visibility,
   onPostEliminado,
 }) => {
   const { user, userProfile } = useAuth();
@@ -284,7 +285,14 @@ const PostCard = ({
         <div className="info">
           <div className="nombrePlanet">{autorActual.nombre}</div>
           <div className="infoPublish">
-            <span>@{autorActual.handle} ● {timePublished(timeAgo)}</span>
+            <span>
+              @{autorActual.handle} ● {timePublished(timeAgo)}
+              {visibility === "private" && (
+                <span className="post-private-badge" title="Publicación privada">
+                  🔒 Privado
+                </span>
+              )}
+            </span>
           </div>
         </div>
         {esPropio && (

@@ -46,7 +46,9 @@ const Profile = () => {
       );
 
       // filtramos los que pudieron salir null (post original borrado)
-      const repostsValidos = repostsConPost.filter(Boolean);
+      const repostsValidos = repostsConPost.filter((post) => (
+        post && (post.visibility !== "private" || post.authorId === user.uid)
+      ));
 
       // 3. Combinamos ambas listas y ordenamos por fecha relevante
       const combinado = [...propios, ...repostsValidos].sort((a, b) => {
@@ -107,6 +109,7 @@ const Profile = () => {
                     destellosNum={post.destellosNum}
                     commentsNum={post.commentsNum}
                     sharesNum={post.sharesNum}
+                    visibility={post.visibility}
                     onPostEliminado={handlePostEliminado}
                   />
                 </div>
