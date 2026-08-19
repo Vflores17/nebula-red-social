@@ -1,20 +1,21 @@
 import { useState, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { signOut } from "firebase/auth";
+import { auth } from "../config/firebase";
+import { useAuth } from "../context/AuthContext";
 import { useClickOutside } from "../hooks/useClickOutside";
 import SignalsPanel from "./SignalsPanel";
 import { signals } from "../mocks/signals";
 import "./Navbar.css";
-import { Link, useNavigate } from "react-router-dom";
-import { signOut } from "firebase/auth";
-import { auth } from "../config/firebase";
 
 const items = [
   { label: "🌌 Cosmos", path: "/" },
   { label: "🔭 Explorar", path: "/explorar" },
-  { label: "⚙️ Cuenta", path: "/configuracion" },
 ];
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const { userProfile } = useAuth();
   const [showSignals, setShowSignals] = useState(false);
   const signalsRef = useRef(null);
 
@@ -24,10 +25,13 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
-      navigate("/login", { replace: true });
+      if (auth) {
+        await signOut(auth);
+      }
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
+    } finally {
+      navigate("/login");
     }
   };
 
@@ -41,7 +45,7 @@ const Navbar = () => {
 
         <div className="navbar-right">
           <ul className="menu">
-  {items.map((item) => (
+            {items.map((item) => (
               <li key={item.label} className="itemsMenu">
                 <Link to={item.path} className="itemMenu">
                   {item.label}
@@ -49,27 +53,38 @@ const Navbar = () => {
               </li>
             ))}
 
-  <li className="itemsMenu signals-wrapper" ref={signalsRef}>
-    <button
-      className="itemMenu"
-      onClick={() => setShowSignals(!showSignals)}
-    >
-      📡 Señales
-      {unreadCount > 0 && (
-        <span className="signals-badge">{unreadCount}</span>
-      )}
-    </button>
-    {showSignals && <SignalsPanel signals={signals} />}
-  </li>
+            <li className="itemsMenu signals-wrapper" ref={signalsRef}>
+              <button
+                className="itemMenu"
+                onClick={() => setShowSignals(!showSignals)}
+              >
+                📡 Señales
+                {unreadCount > 0 && (
+                  <span className="signals-badge">{unreadCount}</span>
+                )}
+              </button>
+              {showSignals && <SignalsPanel signals={signals} />}
+            </li>
 
-  <li className="itemsMenu">
-<Link to="/perfil" className="itemMenu">
+            <li className="itemsMenu">
+              <Link to="/perfil" className="itemMenu">
                 🪐 Mi planeta
-              </Link>  </li>
-</ul>
-<button className="btnSalir" onClick={handleLogout}>
-        🚪Salir
-      </button>        </div>
+              </Link>
+            </li>
+
+            {(userProfile?.role ?? userProfile?.rol) === "admin" && (
+              <li className="itemsMenu">
+                <Link to="/admin" className="itemMenu">
+                  🛡️ Panel Admin
+                </Link>
+              </li>
+            )}
+          </ul>
+
+          <button className="btnSalir" onClick={handleLogout}>
+            🚪 Salir
+          </button>
+        </div>
       </div>
     </nav>
   );

@@ -1,18 +1,22 @@
-import {
-  createUserWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
+import { 
+  createUserWithEmailAndPassword, 
+  GoogleAuthProvider, 
+  signInWithPopup 
 } from "firebase/auth";
-import { auth, db } from "../config/firebase";
-import {
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  serverTimestamp,
+import { auth, db } from "../config/firebase.js";
+import { 
+  doc, 
+  setDoc, 
+  getDoc, 
+  updateDoc, 
+  serverTimestamp 
 } from "firebase/firestore";
 
-export const registerUser = async (nombrePlaneta, email, password) => {
+export const registerUser = async (
+  nombrePlaneta,
+  email,
+  password
+) => {
   const userCredential = await createUserWithEmailAndPassword(
     auth,
     email,
@@ -29,7 +33,7 @@ export const registerUser = async (nombrePlaneta, email, password) => {
     ubicacion: "",
     avatar: "",
     portada: "",
-    rol: "user",
+    role: "user",
     activo: true,
     createdAt: serverTimestamp(),
   });
@@ -54,7 +58,7 @@ export const loginWithGoogle = async () => {
       ubicacion: "",
       avatar: user.photoURL || "",
       portada: "",
-      rol: "user",
+      role: "user",
       activo: true,
       createdAt: serverTimestamp(),
     });
