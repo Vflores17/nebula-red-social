@@ -10,6 +10,7 @@ import { createRepost, getUltimoRepost } from "../services/repostService";
 import { useAuth } from "../context/AuthContext";
 import { getProfileByIdCached } from "../services/userService";
 import ConfirmModal from "./ConfirmModal";
+import { getVimeoId, getYoutubeId, parseHttpUrl } from "../utils/linkParser";
 import "./PostCard.css";
 
 const COOLDOWN_SEGUNDOS = 30; // tiempo de espera entre retransmisiones del mismo post
@@ -22,6 +23,7 @@ const PostCard = ({
   avatar,
   description,
   image,
+  linkUrl,
   timeAgo,
   destellosNum,
   commentsNum,
@@ -45,6 +47,9 @@ const PostCard = ({
   const [errorAccion, setErrorAccion] = useState("");
   const [errorEdicion, setErrorEdicion] = useState("");
   const [autorActual, setAutorActual] = useState({ nombre, handle, avatar });
+  const youtubeId = linkUrl ? getYoutubeId(linkUrl) : null;
+  const vimeoId = linkUrl ? getVimeoId(linkUrl) : null;
+  const parsedLink = linkUrl ? parseHttpUrl(linkUrl) : null;
 
   // --- Estado de comentarios (ya lo tenías) ---
   const [mostrarComentarios, setMostrarComentarios] = useState(false);
@@ -339,6 +344,35 @@ const PostCard = ({
       ) : (
         <div className="description">{descripcionActual}</div>
       )}
+      {youtubeId ? (
+        <div className="post-video-embed">
+          <iframe
+            src={`https://www.youtube.com/embed/${youtubeId}`}
+            title="Video de YouTube"
+            allowFullScreen
+            loading="lazy"
+          />
+        </div>
+      ) : vimeoId ? (
+        <div className="post-video-embed">
+          <iframe
+            src={`https://player.vimeo.com/video/${vimeoId}`}
+            title="Video de Vimeo"
+            allowFullScreen
+            loading="lazy"
+          />
+        </div>
+      ) : parsedLink ? (
+        <a
+          href={parsedLink.href}
+          target="_blank"
+          rel="noreferrer"
+          className="post-link-preview"
+        >
+          <span>🔗 {parsedLink.hostname}</span>
+          <span className="post-link-url">{parsedLink.href}</span>
+        </a>
+      ) : null}
       {image && (
         <div className="imgPost">
           <img src={image} alt="Imagen del post" loading="lazy" />
