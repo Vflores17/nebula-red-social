@@ -29,7 +29,7 @@ export const registerUser = async (nombrePlaneta, email, password) => {
     ubicacion: "",
     avatar: "",
     portada: "",
-    rol: "user",
+    role: "user",
     activo: true,
     createdAt: serverTimestamp(),
   });
@@ -54,7 +54,7 @@ export const loginWithGoogle = async () => {
       ubicacion: "",
       avatar: user.photoURL || "",
       portada: "",
-      rol: "user",
+      role: "user",
       activo: true,
       createdAt: serverTimestamp(),
     });

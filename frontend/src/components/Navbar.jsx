@@ -6,6 +6,7 @@ import "./Navbar.css";
 import { Link, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "../config/firebase";
+import { useAuth } from "../context/AuthContext";
 
 const items = [
   { label: "🌌 Cosmos", path: "/" },
@@ -15,6 +16,7 @@ const items = [
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const { userProfile } = useAuth();
   const [showSignals, setShowSignals] = useState(false);
   const signalsRef = useRef(null);
 
@@ -66,6 +68,11 @@ const Navbar = () => {
 <Link to="/perfil" className="itemMenu">
                 🪐 Mi planeta
               </Link>  </li>
+  {(userProfile?.role ?? userProfile?.rol) === "admin" && (
+    <li className="itemsMenu">
+      <Link to="/admin" className="itemMenu">🛡️ Panel Admin</Link>
+    </li>
+  )}
 </ul>
 <button className="btnSalir" onClick={handleLogout}>
         🚪Salir

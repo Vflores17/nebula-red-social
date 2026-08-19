@@ -24,6 +24,10 @@
     overflow: hidden;
 }
 
+/* IMPORTANTE: esta regla contiene el tamaño de las imágenes de post.
+   Si se agregan estilos nuevos cerca de .imgPost o .header, verificar
+   que esta regla siga aplicando correctamente después del cambio.
+   Ya se rompió 2 veces por cambios entre features (video/enlaces, reportar). */
 .card-post .imgPost img {
     display: block;
     width: 100%;
