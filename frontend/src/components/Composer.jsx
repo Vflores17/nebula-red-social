@@ -2,6 +2,8 @@ import { useState, useRef } from "react";
 import { createPost } from "../services/postService";
 import { uploadImage } from "../services/cloudinaryService";
 import { useAuth } from "../context/AuthContext";
+import { parseHttpUrl } from "../utils/linkParser";
+import ConfirmModal from "./ConfirmModal";
 import "./Composer.css";
 
 const Composer = ({ onPostCreado }) => {
@@ -10,6 +12,9 @@ const Composer = ({ onPostCreado }) => {
   const [imagenFile, setImagenFile] = useState(null); // el archivo real seleccionado
   const [previewUrl, setPreviewUrl] = useState(null); // preview local, antes de subir
   const [visibility, setVisibility] = useState("public");
+  const [mostrarLink, setMostrarLink] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [errorPublicacion, setErrorPublicacion] = useState("");
   const [enviando, setEnviando] = useState(false);
   const fileInputRef = useRef(null); // para "clickear" el input escondido
 
@@ -27,7 +32,13 @@ const Composer = ({ onPostCreado }) => {
   };
 
   const handleTransmitir = async () => {
-    if ((!texto.trim() && !imagenFile) || !user || !userProfile) return;
+    const linkLimpio = linkUrl.trim();
+    if (linkLimpio && !parseHttpUrl(linkLimpio)) {
+      setErrorPublicacion("Ingresa una URL válida que comience con http:// o https://.");
+      return;
+    }
+
+    if ((!texto.trim() && !imagenFile && !linkLimpio) || !user || !userProfile) return;
 
     setEnviando(true);
     try {
@@ -45,6 +56,7 @@ const Composer = ({ onPostCreado }) => {
         handle: userProfile.handle || userProfile.username || userProfile.nombrePlaneta,
         avatar: userProfile.avatar || "",
         visibility,
+        linkUrl: linkLimpio || null,
       });
 
       // limpia todo después de publicar
@@ -52,9 +64,12 @@ const Composer = ({ onPostCreado }) => {
       setImagenFile(null);
       setPreviewUrl(null);
       setVisibility("public");
+      setLinkUrl("");
+      setMostrarLink(false);
       onPostCreado?.();
     } catch (error) {
       console.error("Error al publicar:", error);
+      setErrorPublicacion("No se pudo publicar la transmisión. Inténtalo de nuevo.");
     } finally {
       setEnviando(false);
     }
@@ -83,6 +98,18 @@ const Composer = ({ onPostCreado }) => {
           </div>
         )}
 
+        {mostrarLink && (
+          <input
+            type="url"
+            className="composer-link-input"
+            placeholder="https://youtube.com/watch?v=..."
+            value={linkUrl}
+            onChange={(event) => setLinkUrl(event.target.value)}
+            disabled={enviando}
+            autoFocus
+          />
+        )}
+
         <div className="card-footer">
           {/* input real, escondido con CSS */}
           <input
@@ -103,6 +130,16 @@ const Composer = ({ onPostCreado }) => {
             >
               📎
             </button>
+            <button
+              type="button"
+              className="card-import"
+              aria-label="Agregar enlace"
+              aria-expanded={mostrarLink}
+              onClick={() => setMostrarLink((visible) => !visible)}
+              disabled={enviando}
+            >
+              🔗
+            </button>
             <select
               className="composer-visibility"
               value={visibility}
@@ -120,6 +157,15 @@ const Composer = ({ onPostCreado }) => {
           </button>
         </div>
       </div>
+      <ConfirmModal
+        isOpen={Boolean(errorPublicacion)}
+        title="No se pudo publicar"
+        message={errorPublicacion}
+        confirmLabel="Entendido"
+        cancelLabel=""
+        onConfirm={() => setErrorPublicacion("")}
+        onClose={() => setErrorPublicacion("")}
+      />
     </div>
   );
 };
