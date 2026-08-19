@@ -4,6 +4,7 @@ import Register from './pages/Register';
 import Feed from './pages/Feed';
 import Explorer from './pages/Explorer';
 import Profile from './pages/Profile';
+import TestSolicitudes from './pages/TestSolicitudes';
 import ProtectedRoute from './components/ProtectedRoute';
 import ForgotPassword from './pages/ForgotPassword';
 import AccountSettings from './pages/AccountSettings';
@@ -18,8 +19,10 @@ function App() {
       <Route path="/" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
       <Route path="/explorar" element={<ProtectedRoute><Explorer /></ProtectedRoute>} />
       <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+      <Route path="/perfil/:uid" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/configuracion" element={<ProtectedRoute><AccountSettings /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
+      <Route path="/test-solicitudes" element={<ProtectedRoute><TestSolicitudes /></ProtectedRoute>} />
     </Routes>
   );
 }

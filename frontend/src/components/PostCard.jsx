@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { getCommentsByPost, createComment } from "../services/commentService";
 import {
   deletePost,
@@ -21,7 +22,7 @@ import ReportModal from "./ReportModal";
 import { getVimeoId, getYoutubeId, parseHttpUrl } from "../utils/linkParser";
 import "./PostCard.css";
 
-const COOLDOWN_SEGUNDOS = 30; // tiempo de espera entre retransmisiones del mismo post
+const COOLDOWN_SEGUNDOS = 30;
 
 const PostCard = ({
   id,
@@ -43,11 +44,12 @@ const PostCard = ({
   const { user, userProfile } = useAuth();
   const esPropio = user?.uid === authorId;
   const puedeReportar = Boolean(user && authorId && !esPropio);
+  
   const [liked, setLiked] = useState(false);
   const [likeDocId, setLikeDocId] = useState(null);
   const [procesandoLike, setProcesandoLike] = useState(true);
   const [destellosCount, setDestallosCount] = useState(destellosNum || 0);
-  const [shareCount, setShareCount] = useState(sharesNum);
+  const [shareCount, setShareCount] = useState(sharesNum || 0);
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [editando, setEditando] = useState(false);
   const [descripcionActual, setDescripcionActual] = useState(description);
@@ -60,27 +62,26 @@ const PostCard = ({
   const [errorEdicion, setErrorEdicion] = useState("");
   const [autorActual, setAutorActual] = useState({ nombre, handle, avatar });
   const [reporteTarget, setReporteTarget] = useState(null);
+
   const youtubeId = linkUrl ? getYoutubeId(linkUrl) : null;
   const vimeoId = linkUrl ? getVimeoId(linkUrl) : null;
   const parsedLink = linkUrl ? parseHttpUrl(linkUrl) : null;
 
-  // --- Estado de comentarios (ya lo tenías) ---
+  // --- Estado de comentarios ---
   const [mostrarComentarios, setMostrarComentarios] = useState(false);
   const [comentarios, setComentarios] = useState([]);
   const [nuevoComentario, setNuevoComentario] = useState("");
   const [cargandoComentarios, setCargandoComentarios] = useState(false);
-  const [contadorComentarios, setContadorComentarios] = useState(commentsNum);
+  const [contadorComentarios, setContadorComentarios] = useState(commentsNum || 0);
 
-  // --- Estado nuevo para retransmitir ---
-  const [compartiendo, setCompartiendo] = useState(false); // mientras se guarda en Firestore
-  const [segundosRestantes, setSegundosRestantes] = useState(0); // cooldown activo
-  const intervalRef = useRef(null); // para poder limpiar el setInterval del cooldown
+  // --- Cooldown para retransmitir ---
+  const [compartiendo, setCompartiendo] = useState(false); 
+  const [segundosRestantes, setSegundosRestantes] = useState(0); 
+  const intervalRef = useRef(null); 
 
-  /**
-   * Arranca (o reanuda) la cuenta regresiva visual del cooldown.
-   */
   const iniciarCooldown = (segundosIniciales) => {
     setSegundosRestantes(segundosIniciales);
+    if (intervalRef.current) clearInterval(intervalRef.current);
 
     intervalRef.current = setInterval(() => {
       setSegundosRestantes((prev) => {
@@ -95,7 +96,6 @@ const PostCard = ({
 
   useEffect(() => {
     let activo = true;
-
     const cargarAutorActual = async () => {
       try {
         const perfil = await getProfileByIdCached(authorId);
@@ -107,7 +107,6 @@ const PostCard = ({
           avatar: perfil.avatar || avatar,
         });
       } catch (error) {
-        // Los posts huérfanos conservan sus datos embebidos como fallback.
         console.error("Error al cargar el autor actual del post:", error);
       }
     };
@@ -155,7 +154,6 @@ const PostCard = ({
     return () => { activo = false; };
   }, [id, user, modoSoloLectura]);
 
-  // Al montar el componente, revisa si ya hay un cooldown activo de un repost anterior
   useEffect(() => {
     const revisarCooldown = async () => {
       if (!user || modoSoloLectura) return;
@@ -173,8 +171,6 @@ const PostCard = ({
     };
 
     revisarCooldown();
-
-    // limpieza: si el componente se desmonta, detiene el contador para no dejarlo corriendo en el vacío
     return () => clearInterval(intervalRef.current);
   }, [id, user, modoSoloLectura]);
 
@@ -192,9 +188,8 @@ const PostCard = ({
       });
 
       await incrementarShares(id);
-
       setShareCount((prev) => prev + 1);
-      iniciarCooldown(COOLDOWN_SEGUNDOS); // arranca el cooldown recién creado
+      iniciarCooldown(COOLDOWN_SEGUNDOS);
     } catch (error) {
       console.error("Error al retransmitir:", error);
     } finally {
@@ -209,14 +204,12 @@ const PostCard = ({
     try {
       if (liked) {
         if (!likeDocId) throw new Error("No se encontró el documento del like.");
-
         await unlikePost(likeDocId);
         await decrementarDestellos(id);
         setLiked(false);
         setLikeDocId(null);
         setDestallosCount((prev) => Math.max(0, prev - 1));
       } else {
-        // Otra pestaña pudo crear el like después de la consulta inicial.
         const likeExistente = await getLikeByPostAndUser(id, user.uid);
         if (likeExistente) {
           setLiked(true);
@@ -251,275 +244,227 @@ const PostCard = ({
     setEditando(false);
   };
 
-  const handleSolicitarGuardar = () => {
+  const handleConfirmarGuardar = async () => {
     const nuevoTexto = descripcionEditada.trim();
     if (!nuevoTexto) {
       setErrorEdicion("La publicación no puede quedar vacía.");
       return;
     }
 
-    setErrorEdicion("");
-    setMostrarConfirmGuardar(true);
-  };
-
-  const handleConfirmarGuardar = async () => {
-    const nuevoTexto = descripcionEditada.trim();
     setGuardandoEdicion(true);
-    setErrorEdicion("");
     try {
       await updatePost(id, { description: nuevoTexto });
       setDescripcionActual(nuevoTexto);
-      setDescripcionEditada(nuevoTexto);
       setEditando(false);
-      setMostrarConfirmGuardar(false);
     } catch (error) {
-      console.error("Error al editar la publicación:", error);
-      setMostrarConfirmGuardar(false);
-      setErrorAccion("No se pudo guardar el cambio. Inténtalo de nuevo.");
+      console.error("Error al editar el post:", error);
+      setErrorEdicion("Ocurrió un error al guardar los cambios.");
     } finally {
       setGuardandoEdicion(false);
+      setMostrarConfirmGuardar(false);
     }
-  };
-
-  const handleSolicitarEliminar = () => {
-    setMenuAbierto(false);
-    setMostrarConfirmEliminar(true);
   };
 
   const handleConfirmarEliminar = async () => {
     setEliminando(true);
     try {
       await deletePost(id);
-      setMostrarConfirmEliminar(false);
-      onPostEliminado?.(id);
+      if (onPostEliminado) onPostEliminado(id);
     } catch (error) {
-      console.error("Error al eliminar la publicación:", error);
-      setMostrarConfirmEliminar(false);
-      setErrorAccion("No se pudo eliminar la publicación. Inténtalo de nuevo.");
+      console.error("Error al eliminar el post:", error);
+      setErrorAccion("No se pudo eliminar la publicación.");
     } finally {
       setEliminando(false);
+      setMostrarConfirmEliminar(false);
     }
   };
 
-  const convertNum = (num) => {
-    if (num > 1000000) return (num / 1000000).toFixed(1) + " M ";
-    if (num > 1000) return (num / 1000).toFixed(1) + " K ";
-    return num;
-  };
-
-  const timePublished = (timeAgo) => {
-    const ahora = new Date();
-    const diferenciaMs = ahora - timeAgo;
-    const minutos = Math.floor(diferenciaMs / (1000 * 60));
-    const horas = Math.floor(diferenciaMs / (1000 * 60 * 60));
-    const dias = Math.floor(diferenciaMs / (1000 * 60 * 60 * 24));
-
-    if (dias >= 1) return `Hace ${dias} ${dias === 1 ? "día" : "días"}`;
-    if (horas >= 1) return `Hace ${horas} ${horas === 1 ? "hora" : "horas"}`;
-    return `Hace ${minutos} ${minutos === 1 ? "minuto" : "minutos"}`;
-  };
-
-  const cargarComentarios = async () => {
-    setCargandoComentarios(true);
-    try {
-      const snapshot = await getCommentsByPost(id);
-      setComentarios(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
-    } catch (error) {
-      console.error("Error al cargar comentarios:", error);
-    } finally {
-      setCargandoComentarios(false);
+  const toggleComentarios = async () => {
+    if (!mostrarComentarios) {
+      setCargandoComentarios(true);
+      try {
+        const res = await getCommentsByPost(id);
+        setComentarios(res || []);
+      } catch (error) {
+        console.error("Error al cargar comentarios:", error);
+      } finally {
+        setCargandoComentarios(false);
+      }
     }
+    setMostrarComentarios(!mostrarComentarios);
   };
 
-  const handleToggleComentarios = () => {
-    const seVaAAbrir = !mostrarComentarios;
-    setMostrarComentarios(seVaAAbrir);
-    if (seVaAAbrir && comentarios.length === 0) cargarComentarios();
-  };
+  const handleEnviarComentario = async (e) => {
+    e.preventDefault();
+    if (!nuevoComentario.trim() || !user) return;
 
-  const handleEnviarComentario = async () => {
-    if (nuevoComentario.trim() === "" || !user || !userProfile) return;
     try {
-      await createComment({
-        postId: id,
-        text: nuevoComentario.trim(),
-        authorId: user.uid,
-        nombre: userProfile.nombrePlaneta,
-        handle: userProfile.handle || userProfile.username || userProfile.nombrePlaneta,
-        avatar: userProfile.avatar || "",
+      const nuevo = await createComment(id, user.uid, nuevoComentario.trim(), {
+        nombre: userProfile?.nombrePlaneta || user.displayName || "Usuario",
+        avatar: userProfile?.avatar || ""
       });
-      await incrementarComentarios(id);
+      setComentarios((prev) => [...prev, nuevo]);
       setNuevoComentario("");
+      await incrementarComentarios(id);
       setContadorComentarios((prev) => prev + 1);
-      cargarComentarios();
     } catch (error) {
-      console.error("Error al comentar:", error);
+      console.error("Error al crear comentario:", error);
     }
   };
 
   return (
     <div className="card-post">
       <div className="header">
-        <div className="avatar" style={{ backgroundColor: autorActual.avatar }}>
-          {autorActual.avatar?.startsWith?.("http") && (
-            <img src={autorActual.avatar} alt={`Avatar de ${autorActual.nombre}`} />
-          )}
-        </div>
-        <div className="info">
-          <div className="nombrePlanet">{autorActual.nombre}</div>
-          <div className="infoPublish">
-            <span>
-              @{autorActual.handle} ● {timePublished(timeAgo)}
-              {visibility === "private" && (
-                <span className="post-private-badge" title="Publicación privada">
-                  🔒 Privado
-                </span>
-              )}
-            </span>
-            {puedeReportar && (
-              <button
-                type="button"
-                className="report-author-button"
-                aria-label={`Reportar al autor ${autorActual.nombre}`}
-                title="Reportar autor"
-                onClick={() => setReporteTarget({ type: "user", id: authorId })}
-              >
-                🚩
-              </button>
-            )}
+        <Link to={`/profile/${authorId}`} className="header-link">
+          <div 
+            className="avatar" 
+            style={{ backgroundColor: !autorActual.avatar?.startsWith("http") ? autorActual.avatar : "transparent" }}
+          >
+            <img 
+              src={autorActual.avatar?.startsWith("http") ? autorActual.avatar : "/fallback-avatar.png"} 
+              alt={`Avatar de ${autorActual.nombre}`} 
+            />
           </div>
-        </div>
-        {esPropio && !modoSoloLectura && (
-          <div className="post-owner-menu">
+        </Link>
+
+        <div className="info">
+          <Link to={`/profile/${authorId}`} className="nombrePlanet">
+            <strong>{autorActual.nombre}</strong>
+          </Link>
+          <span className="handle">@{autorActual.handle}</span>
+          <span className="time">• {timeAgo}</span>
+          {visibility === "private" && (
+            <span className="post-private-badge" title="Publicación privada">
+              🔒 Privado
+            </span>
+          )}
+          {puedeReportar && (
             <button
               type="button"
-              className="post-menu-trigger"
-              aria-label="Opciones de la publicación"
-              aria-expanded={menuAbierto}
-              onClick={() => setMenuAbierto((abierto) => !abierto)}
-              disabled={eliminando}
+              className="report-author-button"
+              aria-label={`Reportar al autor ${autorActual.nombre}`}
+              title="Reportar autor"
+              onClick={() => setReporteTarget({ type: "user", id: authorId })}
             >
-              ⋯
+              🚩
             </button>
+          )}
+        </div>
+
+        {esPropio && !modoSoloLectura && (
+          <div className="post-owner-menu">
+            <button className="post-menu-trigger" onClick={() => setMenuAbierto(!menuAbierto)}>⋮</button>
             {menuAbierto && (
               <div className="post-menu-options">
-                <button type="button" onClick={handleEditar}>Editar</button>
-                <button type="button" className="delete-option" onClick={handleSolicitarEliminar}>
-                  Eliminar
-                </button>
+                <button onClick={handleEditar}>Editar</button>
+                <button className="delete-option" onClick={() => setMostrarConfirmEliminar(true)}>Eliminar</button>
               </div>
             )}
           </div>
         )}
       </div>
-      {editando ? (
-        <div className="post-edit-form">
-          <textarea
-            value={descripcionEditada}
-            onChange={(event) => setDescripcionEditada(event.target.value)}
-            disabled={guardandoEdicion}
-            autoFocus
-          />
-          {errorEdicion && <p className="post-edit-error">{errorEdicion}</p>}
-          <div className="post-edit-actions">
-            <button type="button" onClick={handleSolicitarGuardar} disabled={guardandoEdicion}>
-              {guardandoEdicion ? "Guardando..." : "Guardar"}
-            </button>
-            <button type="button" onClick={handleCancelarEdicion} disabled={guardandoEdicion}>
-              Cancelar
-            </button>
+
+      <div className="content" style={{ width: "100%" }}>
+        {editando ? (
+          <div className="post-edit-form">
+            <textarea value={descripcionEditada} onChange={(e) => setDescripcionEditada(e.target.value)} />
+            {errorEdicion && <p className="post-edit-error">{errorEdicion}</p>}
+            <div className="post-edit-actions">
+              <button onClick={() => setMostrarConfirmGuardar(true)} disabled={guardandoEdicion}>Guardar</button>
+              <button onClick={handleCancelarEdicion}>Cancelar</button>
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="description">{descripcionActual}</div>
-      )}
-      {youtubeId ? (
-        <div className="post-video-embed">
-          <iframe
-            src={`https://www.youtube.com/embed/${youtubeId}`}
-            title="Video de YouTube"
-            allowFullScreen
-            loading="lazy"
-          />
-        </div>
-      ) : vimeoId ? (
-        <div className="post-video-embed">
-          <iframe
-            src={`https://player.vimeo.com/video/${vimeoId}`}
-            title="Video de Vimeo"
-            allowFullScreen
-            loading="lazy"
-          />
-        </div>
-      ) : parsedLink ? (
-        <a
-          href={parsedLink.href}
-          target="_blank"
-          rel="noreferrer"
-          className="post-link-preview"
-        >
-          <span>🔗 {parsedLink.hostname}</span>
-          <span className="post-link-url">{parsedLink.href}</span>
-        </a>
-      ) : null}
-      {image && (
-        <div className="imgPost">
-          <img src={image} alt="Imagen del post" loading="lazy" />
-        </div>
-      )}
-      {!modoSoloLectura && <div className="options">
-        <button
-          className={`btnDestellos ${liked ? "active" : ""}`}
-          onClick={handleDestello}
-          disabled={procesandoLike || !user}
-          aria-pressed={liked}
-        >
-          💫 {convertNum(destellosCount)}
-        </button>
-        <button className="btnComments" onClick={handleToggleComentarios}>
-          💬 {convertNum(contadorComentarios)}
-        </button>
-        <button
-          className="btnShares"
-          onClick={handleShares}
-          disabled={compartiendo || segundosRestantes > 0}
-        >
-          📡 {convertNum(shareCount)}
-          {segundosRestantes > 0 && <span className="cooldown-text"> ({segundosRestantes}s)</span>}
-        </button>
-        {puedeReportar && (
-          <button
-            type="button"
-            className="btnReport"
-            onClick={() => setReporteTarget({ type: "post", id })}
-          >
-            🚩 Reportar
-          </button>
+        ) : (
+          <p className="description">{descripcionActual}</p>
         )}
-      </div>}
+
+        {youtubeId ? (
+          <div className="post-video-embed">
+            <iframe
+              src={`https://www.youtube.com/embed/${youtubeId}`}
+              title="Video de YouTube"
+              allowFullScreen
+              loading="lazy"
+            />
+          </div>
+        ) : vimeoId ? (
+          <div className="post-video-embed">
+            <iframe
+              src={`https://player.vimeo.com/video/${vimeoId}`}
+              title="Video de Vimeo"
+              allowFullScreen
+              loading="lazy"
+            />
+          </div>
+        ) : parsedLink ? (
+          <a
+            href={typeof parsedLink === "string" ? parsedLink : parsedLink.href}
+            target="_blank"
+            rel="noreferrer"
+            className="post-link-preview"
+          >
+            <span className="post-link-url">
+              {typeof parsedLink === "string" ? parsedLink : parsedLink.href}
+            </span>
+          </a>
+        ) : null}
+
+        {image && (
+          <div className="imgPost">
+            <img src={image} alt="Imagen de la publicación" loading="lazy" />
+          </div>
+        )}
+      </div>
+
+      {!modoSoloLectura && (
+        <div className="options">
+          <button
+            className={`btnDestellos ${liked ? "active" : ""}`}
+            onClick={handleDestello}
+            disabled={procesandoLike || !user}
+            aria-pressed={liked}
+          >
+            ✨ {destellosCount}
+          </button>
+          <button className="btnComments" onClick={toggleComentarios}>
+            💬 {contadorComentarios}
+          </button>
+          <button className="btnShares" onClick={handleShares} disabled={compartiendo || segundosRestantes > 0}>
+            🚀 {segundosRestantes > 0 ? `${segundosRestantes}s` : shareCount}
+          </button>
+          {puedeReportar && (
+            <button
+              type="button"
+              className="btnReport"
+              onClick={() => setReporteTarget({ type: "post", id })}
+            >
+              🚩 Reportar
+            </button>
+          )}
+        </div>
+      )}
 
       {mostrarComentarios && (
         <div className="comments-panel">
-          <div className="comments-input-row">
-            <input
-              type="text"
-              placeholder="Escribe un comentario..."
-              value={nuevoComentario}
-              onChange={(e) => setNuevoComentario(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleEnviarComentario()}
+          <form className="comments-input-row" onSubmit={handleEnviarComentario}>
+            <input 
+              type="text" 
+              placeholder="Escribe un comentario..." 
+              value={nuevoComentario} 
+              onChange={(e) => setNuevoComentario(e.target.value)} 
             />
-            <button onClick={handleEnviarComentario}>Enviar</button>
-          </div>
+            <button type="submit">Enviar</button>
+          </form>
 
           {cargandoComentarios ? (
-            <p className="comments-loading">Cargando comentarios...</p>
+            <div className="comments-loading">Cargando comentarios...</div>
           ) : comentarios.length === 0 ? (
-            <p className="comments-empty">Sé el primero en comentar</p>
+            <div className="comments-empty">No hay comentarios aún.</div>
           ) : (
             <ul className="comments-list">
               {comentarios.map((c) => (
                 <li key={c.id} className="comment-item">
-                  <div className="comment-avatar" style={{ backgroundColor: c.avatar }}></div>
+                  <img className="comment-avatar" src={c.avatar || "/fallback-avatar.png"} alt="avatar" />
                   <div className="comment-content">
                     <span className="comment-nombre">{c.nombre}</span>
                     <span className="comment-text">{c.text}</span>
@@ -531,6 +476,7 @@ const PostCard = ({
         </div>
       )}
 
+      {/* Modales de Confirmación */}
       <ConfirmModal
         isOpen={mostrarConfirmGuardar}
         title="¿Guardar cambios?"
@@ -552,15 +498,17 @@ const PostCard = ({
         onClose={() => setMostrarConfirmEliminar(false)}
       />
 
-      <ConfirmModal
-        isOpen={Boolean(errorAccion)}
-        title="No se pudo completar la acción"
-        message={errorAccion}
-        confirmLabel="Entendido"
-        cancelLabel=""
-        onConfirm={() => setErrorAccion("")}
-        onClose={() => setErrorAccion("")}
-      />
+      {errorAccion && (
+        <ConfirmModal
+          isOpen={Boolean(errorAccion)}
+          title="No se pudo completar la acción"
+          message={errorAccion}
+          confirmLabel="Entendido"
+          cancelLabel=""
+          onConfirm={() => setErrorAccion("")}
+          onClose={() => setErrorAccion("")}
+        />
+      )}
 
       {reporteTarget && (
         <ReportModal

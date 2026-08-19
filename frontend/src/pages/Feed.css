@@ -27,6 +27,18 @@
     width: 80%;
 }
 
+.feed-empty {
+    color: #9ca3af;
+    text-align: center;
+    padding: 30px 20px;
+    line-height: 1.5;
+}
+
+.feed-empty a {
+    color: #a78bfa;
+    font-weight: 600;
+}
+
 .stars {
     position: fixed;
     inset: 0;
