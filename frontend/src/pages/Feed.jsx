@@ -4,10 +4,12 @@ import Navbar from "../components/Navbar";
 import PostCard from "../components/PostCard";
 import SuggestedPlanets from "../components/SuggestedPlanets";
 import { getAll } from "../services/postService"; // ajusta el path si es distinto
+import { useAuth } from "../context/AuthContext";
 import "./Feed.css";
 
 export default function Feed() {
   const [posts, setPosts] = useState([]);
+  const { user } = useAuth();
 
   const cargarPosts = async () => {
     const snapshot = await getAll();
@@ -32,6 +34,11 @@ export default function Feed() {
     setPosts((postsActuales) => postsActuales.filter((post) => post.id !== postId));
   };
 
+  // Solo el autor puede ver sus posts privados; undefined se considera público.
+  const postsDelFeed = posts.filter(
+    (post) => post.visibility !== "private" || post.authorId === user?.uid
+  );
+
   return (
     <div className="feed-page">
       <div className="stars"></div>
@@ -39,7 +46,7 @@ export default function Feed() {
       <div className="feed-main">
         <div className="feed-content">
           <Composer onPostCreado={cargarPosts} />
-          {posts.map((post) => (
+          {postsDelFeed.map((post) => (
             <PostCard
               key={post.id}
               id={post.id}
@@ -53,6 +60,7 @@ export default function Feed() {
               destellosNum={post.destellosNum}
               commentsNum={post.commentsNum}
               sharesNum={post.sharesNum}
+              visibility={post.visibility}
               onPostEliminado={handlePostEliminado}
             />
           ))}

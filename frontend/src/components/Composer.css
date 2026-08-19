@@ -65,4 +65,44 @@
     font-size: 25px;
     margin-top: 5px;
     cursor: pointer;
+    color: var(--text-primary);
+}
+
+.composer-footer-tools {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.composer-visibility {
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    cursor: pointer;
+}
+
+.composer-visibility:focus {
+    border-color: var(--purple-primary);
+    outline: none;
+}
+
+.composer-visibility option {
+    background: var(--bg-dark);
+    color: var(--text-primary);
+}
+
+@media (max-width: 480px) {
+    .card-footer {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .composer-footer-tools,
+    .composer-visibility {
+        width: 100%;
+    }
 }
