@@ -65,6 +65,49 @@
     resize: none;
 }
 
+.card-composer .composer-preview {
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    border-radius: 15px;
+}
+
+.card-composer .composer-preview img {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+.card-composer .composer-preview-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+}
+
+.composer-link-input {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+}
+
+.composer-link-input:focus {
+    border-color: var(--purple-primary);
+    outline: none;
+}
+
+.composer-link-input::placeholder {
+    color: var(--text-secondary);
+}
+
 .card-textArea-btn button{
     background-color: rgba(168, 85, 247, 0.5); 
     font-size: 15px ; 

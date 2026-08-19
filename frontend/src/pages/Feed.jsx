@@ -56,6 +56,7 @@ export default function Feed() {
               avatar={post.avatar}
               description={post.description}
               image={post.image}
+              linkUrl={post.linkUrl}
               timeAgo={post.createdAt?.toDate?.() || new Date()}
               destellosNum={post.destellosNum}
               commentsNum={post.commentsNum}
