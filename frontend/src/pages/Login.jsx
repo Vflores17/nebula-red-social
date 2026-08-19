@@ -3,6 +3,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../config/firebase";
+import { db } from "../config/firebase";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import "./Login.css";
 
 /* definicion del componente*/
@@ -29,7 +31,14 @@ function Login() {
   }
 
   try {
-    await signInWithEmailAndPassword(auth, correo.trim(), password);
+       const credenciales = await signInWithEmailAndPassword(auth, correo.trim(), password);
+
+    const perfilRef = doc(db, "users", credenciales.user.uid);
+    const perfil = await getDoc(perfilRef);
+    if (perfil.exists() && perfil.data().activo === false) {
+      await updateDoc(perfilRef, { activo: true, desactivadoEn: null });
+    }
+
     setError("");
     navigate("/");
   } catch (err) {

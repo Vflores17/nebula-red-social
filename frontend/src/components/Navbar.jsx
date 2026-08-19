@@ -10,6 +10,7 @@ import { auth } from "../config/firebase";
 const items = [
   { label: "🌌 Cosmos", path: "/" },
   { label: "🔭 Explorar", path: "/explorar" },
+  { label: "⚙️ Cuenta", path: "/configuracion" },
 ];
 
 const Navbar = () => {

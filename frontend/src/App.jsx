@@ -6,6 +6,7 @@ import Explorer from './pages/Explorer';
 import Profile from './pages/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 import ForgotPassword from './pages/ForgotPassword';
+import AccountSettings from './pages/AccountSettings';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
       <Route path="/" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
       <Route path="/explorar" element={<ProtectedRoute><Explorer /></ProtectedRoute>} />
       <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+      <Route path="/configuracion" element={<ProtectedRoute><AccountSettings /></ProtectedRoute>} />
     </Routes>
   );
 }
