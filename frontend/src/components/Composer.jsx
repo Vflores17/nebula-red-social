@@ -1,10 +1,11 @@
 import { useState, useRef } from "react";
 import { createPost } from "../services/postService";
 import { uploadImage } from "../services/cloudinaryService";
+import { useAuth } from "../context/AuthContext";
 import "./Composer.css";
-import {usuarioActivo } from "../mocks/demoUsers";
 
 const Composer = ({ onPostCreado }) => {
+  const { user, userProfile } = useAuth();
   const [texto, setTexto] = useState("");
   const [imagenFile, setImagenFile] = useState(null); // el archivo real seleccionado
   const [previewUrl, setPreviewUrl] = useState(null); // preview local, antes de subir
@@ -25,7 +26,7 @@ const Composer = ({ onPostCreado }) => {
   };
 
   const handleTransmitir = async () => {
-    if (texto.trim() === "" && !imagenFile) return; // no publiques posts vacíos
+    if ((!texto.trim() && !imagenFile) || !user || !userProfile) return;
 
     setEnviando(true);
     try {
@@ -38,7 +39,10 @@ const Composer = ({ onPostCreado }) => {
       await createPost({
         description: texto.trim(),
         image: imageUrl,
-        ...usuarioActivo,
+        authorId: user.uid,
+        nombre: userProfile.nombrePlaneta,
+        handle: userProfile.handle || userProfile.username || userProfile.nombrePlaneta,
+        avatar: userProfile.avatar || "",
       });
 
       // limpia todo después de publicar
@@ -94,7 +98,7 @@ const Composer = ({ onPostCreado }) => {
             📎
           </div>
 
-          <button onClick={handleTransmitir} disabled={enviando}>
+          <button onClick={handleTransmitir} disabled={enviando || !userProfile}>
             {enviando ? "Transmitiendo..." : "Transmitir ➤"}
           </button>
         </div>
