@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { getCommentsByPost, createComment } from "../services/commentService";
 import { incrementarComentarios, incrementarShares } from "../services/postService";
 import { createRepost, getUltimoRepost } from "../services/repostService";
@@ -9,6 +10,7 @@ const COOLDOWN_SEGUNDOS = 30; // tiempo de espera entre retransmisiones del mism
 
 const PostCard = ({
   id,
+  authorId,
   nombre,
   handle,
   avatar,
@@ -166,15 +168,27 @@ const PostCard = ({
 
   return (
     <div className="card-post">
-      <div className="header">
-        <div className="avatar" style={{ backgroundColor: avatar }}></div>
-        <div className="info">
-          <div className="nombrePlanet">{nombre}</div>
-          <div className="infoPublish">
-            <span>@{handle} ● {timePublished(timeAgo)}</span>
+      {authorId ? (
+        <Link to={`/perfil/${authorId}`} className="header header-link">
+          <div className="avatar" style={{ backgroundColor: avatar }}></div>
+          <div className="info">
+            <div className="nombrePlanet">{nombre}</div>
+            <div className="infoPublish">
+              <span>@{handle} ● {timePublished(timeAgo)}</span>
+            </div>
+          </div>
+        </Link>
+      ) : (
+        <div className="header">
+          <div className="avatar" style={{ backgroundColor: avatar }}></div>
+          <div className="info">
+            <div className="nombrePlanet">{nombre}</div>
+            <div className="infoPublish">
+              <span>@{handle} ● {timePublished(timeAgo)}</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
       <div className="description">{description}</div>
       {image && (
         <div className="imgPost">

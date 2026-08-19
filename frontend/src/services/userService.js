@@ -1,6 +1,6 @@
 import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, updateDoc } from 'firebase/firestore'
 import {db} from '../config/firebase'
-const collectionString = 'user'
+const collectionString = 'users'
 
 const collectionRef = collection(db, collectionString)
 

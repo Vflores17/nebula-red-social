@@ -7,28 +7,39 @@ const collectionRef = collection(db, collectionString)
 
 // METODOS DEL CRUD
 
+// GETALL
 export const getAll = async ()=>{
     const data = await getDocs(collectionRef)
+
     return data
 }
 
+//GETBYID
 export const getById = async id =>{
     const document = await getDoc(doc(db,collectionString,id))
+
     if (document.exists) return document
+
     return null
+
 }
 
+//CREATE
 export const createFriendship = async document => await addDoc(collectionRef,document)
 
+//UPDATE
 export const updateFriendship = async (id, documento) => {
     const docRef = doc(db,collectionString,id)
-    if (docRef.exists)
+
+    if (docRef.exists) 
         return await updateDoc(docRef,documento)
 }
 
+//DELETE
 export const deleteFriendship = async id => {
     const docRef = doc(db,collectionString,id)
-    if (docRef.exists)
+
+    if (docRef.exists) 
         return await deleteDoc(docRef)
 }
 
@@ -42,6 +53,7 @@ export const enviarSolicitud = async (solicitanteId, receptorId) => {
         throw new Error('No puedes enviarte una solicitud a ti mismo')
     }
 
+    // Verifica que no exista ya una relación (en cualquier dirección)
     const existente = await obtenerEstado(solicitanteId, receptorId)
     if (existente) {
         throw new Error(
@@ -58,6 +70,7 @@ export const enviarSolicitud = async (solicitanteId, receptorId) => {
         createdAt: serverTimestamp(),
     })
 
+    // Crea una notificación (una "Señal") para quien la recibe
     await crearNotificacion({
         usuarioId: receptorId,
         tipo: 'orbita',
@@ -70,6 +83,7 @@ export const enviarSolicitud = async (solicitanteId, receptorId) => {
 }
 
 // Devuelve el estado de la relación entre dos usuarios (o null si no existe)
+// { id, estado, solicitanteId, receptorId, esSolicitante }
 export const obtenerEstado = async (uidA, uidB) => {
     const q1 = query(
         collectionRef,
@@ -106,7 +120,8 @@ export const obtenerSolicitudesPendientes = async (usuarioId) => {
     return snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
 }
 
-// Aceptar una solicitud (recibe el documento completo para poder notificar)
+// Aceptar una solicitud (recibe el documento completo, no solo el id,
+// para poder notificar a quien la envió)
 export const aceptarSolicitud = async (solicitud) => {
     const docRef = doc(db, collectionString, solicitud.id)
     await updateDoc(docRef, { estado: 'aceptada' })

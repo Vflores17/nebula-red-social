@@ -6,41 +6,52 @@ const collectionRef = collection(db, collectionString)
 
 // METODOS DEL CRUD
 
+// GETALL
 export const getAll = async ()=>{
     const data = await getDocs(collectionRef)
+
     return data
 }
 
+//GETBYID
 export const getById = async id =>{
     const document = await getDoc(doc(db,collectionString,id))
+
     if (document.exists) return document
+
     return null
+
 }
 
+//CREATE
 export const createNotification = async document => await addDoc(collectionRef,document)
 
+//UPDATE
 export const updateNotification = async (id, documento) => {
     const docRef = doc(db,collectionString,id)
-    if (docRef.exists)
+
+    if (docRef.exists) 
         return await updateDoc(docRef,documento)
 }
 
+//DELETE
 export const deleteNotification = async id => {
     const docRef = doc(db,collectionString,id)
-    if (docRef.exists)
+
+    if (docRef.exists) 
         return await deleteDoc(docRef)
 }
 
 // ============================================================
-// FUNCIONES DE CONVENIENCIA
+// FUNCIONES DE CONVENIENCIA (usadas por friendshipService, etc.)
 // ============================================================
 
 // Crea una notificación con timestamp automático
 export const crearNotificacion = async ({ usuarioId, tipo, origenId, solicitudId, leida = false }) => {
     return await addDoc(collectionRef, {
         usuarioId,
-        tipo,
-        origenId,
+        tipo,        // 'orbita' | 'destello' | 'eco' | 'sistema'
+        origenId,    // uid de quien generó la notificación
         solicitudId: solicitudId ?? null,
         leida,
         createdAt: serverTimestamp(),
