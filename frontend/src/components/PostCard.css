@@ -24,6 +24,10 @@
     overflow: hidden;
 }
 
+/* IMPORTANTE: esta regla contiene el tamaño de las imágenes de post.
+   Si se agregan estilos nuevos cerca de .imgPost o .header, verificar
+   que esta regla siga aplicando correctamente después del cambio.
+   Ya se rompió 2 veces por cambios entre features (video/enlaces, reportar). */
 .card-post .imgPost img {
     display: block;
     width: 100%;
@@ -97,6 +101,24 @@
 
 .infoPublish{
     display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.report-author-button {
+    padding: 2px 4px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font-size: 12px;
+    opacity: 0.65;
+}
+
+.report-author-button:hover,
+.report-author-button:focus-visible {
+    opacity: 1;
+    outline: 1px solid var(--purple-primary);
+    border-radius: 5px;
 }
 
 .post-private-badge {
@@ -125,12 +147,15 @@
 .options{
     width: 100%;
     display: flex;
-justify-content: space-around;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    gap: 6px;
+    box-sizing: border-box;
     padding: 10px;
     border-top: 2px solid rgba(175, 166, 166, 0.4);
 }
 
-.btnDestellos, .btnComments, .btnShares {
+.btnDestellos, .btnComments, .btnShares, .btnReport {
     display: flex;
     align-items: stretch;
     gap: 4px;
@@ -141,6 +166,12 @@ justify-content: space-around;
     border: 0.1px solid;
     background-color: transparent;
     font-size: 17px;
+}
+
+.btnReport:hover {
+    background: var(--bg-card);
+    border-radius: 15px;
+    color: #fca5a5;
 }
 
 .btnDestellos.active {
