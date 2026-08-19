@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { registerUser } from "../services/authService";
 import "./Register.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function Register() {
   const [nombrePlaneta, setNombrePlaneta] = useState("");
@@ -11,6 +11,7 @@ function Register() {
   const [correoValido, setCorreoValido] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -35,8 +36,8 @@ function Register() {
   correo,
   password
 );
-      console.log("Usuario registrado:", user);
-      console.log("UID:", user.uid);
+      console.log("Usuario registrado:", user.uid);
+      navigate("/", { replace: true });
     } catch (error) {
       console.error("Error de Firebase:", error.code);
       setError("No se pudo crear la cuenta");

@@ -3,6 +3,9 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../config/firebase";
+import { db } from "../config/firebase";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { loginWithGoogle } from "../services/authService";
 import "./Login.css";
 
 /* definicion del componente*/
@@ -14,7 +17,20 @@ function Login() {
   const regexCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const navigate = useNavigate();
   /* *******    funciones del componente    *************/
-
+  const handleGoogle = async () => {
+    try {
+      await loginWithGoogle();
+      setError("");
+      navigate("/");
+    } catch (err) {
+      console.error("Error con Google:", err.code);
+      if (err.code === "auth/popup-closed-by-user") {
+        setError("Cerraste la ventana de Google antes de terminar.");
+      } else {
+        setError("No pudimos conectarte con Google. Intenta de nuevo.");
+      }
+    }
+  };
   /* Funcion para validar datos del formulario */
   const handleLogin = async (e) => {
   e.preventDefault();
@@ -29,7 +45,14 @@ function Login() {
   }
 
   try {
-    await signInWithEmailAndPassword(auth, correo.trim(), password);
+       const credenciales = await signInWithEmailAndPassword(auth, correo.trim(), password);
+
+    const perfilRef = doc(db, "users", credenciales.user.uid);
+    const perfil = await getDoc(perfilRef);
+    if (perfil.exists() && perfil.data().activo === false) {
+      await updateDoc(perfilRef, { activo: true, desactivadoEn: null });
+    }
+
     setError("");
     navigate("/");
   } catch (err) {
@@ -88,7 +111,16 @@ function Login() {
             </div>
           </div>
         )}
+                <br />
+        <div className="btn-submit">
+          <button type="button" id="btn_ingresar" onClick={handleGoogle}>
+            Continuar con Google 🌐
+          </button>
+        </div>
         <br />
+        <p className="register-link">
+          ¿Olvidaste tu clave estelar? <Link to="/recuperar">Recupérala</Link>
+        </p>
         <p className="register-link">
           ¿Eres nuevo en el cosmos? <Link to="/register">Regístrate</Link>
         </p>

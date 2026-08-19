@@ -4,10 +4,13 @@ import SignalsPanel from "./SignalsPanel";
 import { signals } from "../mocks/signals";
 import "./Navbar.css";
 import { Link, useNavigate } from "react-router-dom";
+import { signOut } from "firebase/auth";
+import { auth } from "../config/firebase";
 
 const items = [
   { label: "🌌 Cosmos", path: "/" },
   { label: "🔭 Explorar", path: "/explorar" },
+  { label: "⚙️ Cuenta", path: "/configuracion" },
 ];
 
 const Navbar = () => {
@@ -19,9 +22,13 @@ const Navbar = () => {
 
   const unreadCount = signals.filter((s) => !s.read).length;
 
-  const handleLogout = () => {
-    // limpiar localStorage / contexto de sesión
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+    }
   };
 
   return (
