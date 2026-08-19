@@ -5,6 +5,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../config/firebase";
 import { db } from "../config/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { loginWithGoogle } from "../services/authService";
 import "./Login.css";
 
 /* definicion del componente*/
@@ -16,7 +17,20 @@ function Login() {
   const regexCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const navigate = useNavigate();
   /* *******    funciones del componente    *************/
-
+  const handleGoogle = async () => {
+    try {
+      await loginWithGoogle();
+      setError("");
+      navigate("/");
+    } catch (err) {
+      console.error("Error con Google:", err.code);
+      if (err.code === "auth/popup-closed-by-user") {
+        setError("Cerraste la ventana de Google antes de terminar.");
+      } else {
+        setError("No pudimos conectarte con Google. Intenta de nuevo.");
+      }
+    }
+  };
   /* Funcion para validar datos del formulario */
   const handleLogin = async (e) => {
   e.preventDefault();
@@ -97,6 +111,12 @@ function Login() {
             </div>
           </div>
         )}
+                <br />
+        <div className="btn-submit">
+          <button type="button" id="btn_ingresar" onClick={handleGoogle}>
+            Continuar con Google 🌐
+          </button>
+        </div>
         <br />
         <p className="register-link">
           ¿Olvidaste tu clave estelar? <Link to="/recuperar">Recupérala</Link>
