@@ -1,37 +1,35 @@
-export const parseHttpUrl = (value) => {
+// Extrae el ID de un video de YouTube desde distintas variantes de URL
+export const getYoutubeId = (url) => {
+  if (!url) return null;
+
+  const regex =
+    /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/;
+
+  const match = url.match(regex);
+  return match ? match[1] : null;
+};
+
+// Extrae el ID de un video de Vimeo
+export const getVimeoId = (url) => {
+  if (!url) return null;
+
+  const regex = /vimeo\.com\/(?:video\/)?(\d+)/;
+
+  const match = url.match(regex);
+  return match ? match[1] : null;
+};
+
+// Valida y normaliza una URL http/https genérica (para links que no son de video)
+export const parseHttpUrl = (url) => {
+  if (!url) return null;
+
   try {
-    const parsedUrl = new URL(value);
-    return ["http:", "https:"].includes(parsedUrl.protocol) ? parsedUrl : null;
+    const parsed = new URL(url);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return parsed.href;
+    }
+    return null;
   } catch {
     return null;
   }
-};
-
-export const getYoutubeId = (url) => {
-  const parsedUrl = parseHttpUrl(url);
-  if (!parsedUrl) return null;
-
-  const hostname = parsedUrl.hostname.replace(/^www\./, "");
-  if (hostname === "youtu.be") {
-    const videoId = parsedUrl.pathname.split("/").filter(Boolean)[0];
-    return /^[a-zA-Z0-9_-]{11}$/.test(videoId || "") ? videoId : null;
-  }
-
-  if (hostname === "youtube.com" || hostname === "m.youtube.com") {
-    const videoId = parsedUrl.searchParams.get("v");
-    return /^[a-zA-Z0-9_-]{11}$/.test(videoId || "") ? videoId : null;
-  }
-
-  return null;
-};
-
-export const getVimeoId = (url) => {
-  const parsedUrl = parseHttpUrl(url);
-  if (!parsedUrl) return null;
-
-  const hostname = parsedUrl.hostname.replace(/^www\./, "");
-  if (hostname !== "vimeo.com") return null;
-
-  const videoId = parsedUrl.pathname.split("/").filter(Boolean)[0];
-  return /^\d+$/.test(videoId || "") ? videoId : null;
 };

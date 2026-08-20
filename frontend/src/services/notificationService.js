@@ -9,14 +9,18 @@ const collectionRef = collection(db, collectionString)
 // GETALL
 export const getAll = async ()=>{
     const data = await getDocs(collectionRef)
+
     return data
 }
 
 //GETBYID
 export const getById = async id =>{
     const document = await getDoc(doc(db,collectionString,id))
-    if (document.exists()) return document
+
+    if (document.exists) return document
+
     return null
+
 }
 
 //CREATE
@@ -25,13 +29,17 @@ export const createNotification = async document => await addDoc(collectionRef,d
 //UPDATE
 export const updateNotification = async (id, documento) => {
     const docRef = doc(db,collectionString,id)
-    return await updateDoc(docRef,documento)
+
+    if (docRef.exists) 
+        return await updateDoc(docRef,documento)
 }
 
 //DELETE
 export const deleteNotification = async id => {
     const docRef = doc(db,collectionString,id)
-    return await deleteDoc(docRef)
+
+    if (docRef.exists) 
+        return await deleteDoc(docRef)
 }
 
 // ============================================================

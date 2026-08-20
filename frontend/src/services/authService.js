@@ -1,16 +1,6 @@
-import { 
-  createUserWithEmailAndPassword, 
-  GoogleAuthProvider, 
-  signInWithPopup 
-} from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../config/firebase.js";
-import { 
-  doc, 
-  setDoc, 
-  getDoc, 
-  updateDoc, 
-  serverTimestamp 
-} from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export const registerUser = async (
   nombrePlaneta,
@@ -33,38 +23,9 @@ export const registerUser = async (
     ubicacion: "",
     avatar: "",
     portada: "",
-    role: "user",
-    activo: true,
+    rol: "user",
     createdAt: serverTimestamp(),
   });
-
-  return user;
-};
-
-export const loginWithGoogle = async () => {
-  const provider = new GoogleAuthProvider();
-  const result = await signInWithPopup(auth, provider);
-  const user = result.user;
-
-  const perfilRef = doc(db, "users", user.uid);
-  const perfil = await getDoc(perfilRef);
-
-  if (!perfil.exists()) {
-    await setDoc(perfilRef, {
-      uid: user.uid,
-      nombrePlaneta: user.displayName || "Explorador",
-      correo: user.email,
-      biografia: "",
-      ubicacion: "",
-      avatar: user.photoURL || "",
-      portada: "",
-      role: "user",
-      activo: true,
-      createdAt: serverTimestamp(),
-    });
-  } else if (perfil.data().activo === false) {
-    await updateDoc(perfilRef, { activo: true, desactivadoEn: null });
-  }
 
   return user;
 };

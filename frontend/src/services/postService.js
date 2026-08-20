@@ -3,7 +3,6 @@ import {db} from '../config/firebase'
 const collectionString = 'post'
 
 const collectionRef = collection(db, collectionString)
-const postCache = new Map()
 
 // METODOS DEL CRUD
 
@@ -24,22 +23,6 @@ export const getById = async id =>{
 
 }
 
-// Comparte la misma consulta cuando varios reportes apuntan al mismo post.
-export const getPostByIdCached = async id => {
-    if (!id) return null
-
-    if (!postCache.has(id)) {
-        postCache.set(id, getById(id).then(document => (
-            document ? { id: document.id, ...document.data() } : null
-        )).catch(error => {
-            postCache.delete(id)
-            throw error
-        }))
-    }
-
-    return await postCache.get(id)
-}
-
 // CREATE
 export const createPost = async documento => await addDoc(collectionRef, {
     ...documento,
@@ -52,13 +35,17 @@ export const createPost = async documento => await addDoc(collectionRef, {
 //UPDATE
 export const updatePost = async (id, documento) => {
     const docRef = doc(db,collectionString,id)
-    return await updateDoc(docRef, documento)
+
+    if (docRef.exists) 
+        return await updateDoc(docRef, documento)
 }
 
 //DELETE
 export const deletePost = async id => {
     const docRef = doc(db,collectionString,id)
-    return await deleteDoc(docRef)
+
+    if (docRef.exists) 
+        return await deleteDoc(docRef)
 }
 
 export const incrementarComentarios = async (postId) => {

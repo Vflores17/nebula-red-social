@@ -1,9 +1,13 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../config/firebase";
-import { getById as getUserById } from "../services/userService";
+import { doc, onSnapshot } from "firebase/firestore";
+import { auth, db } from "../config/firebase";
 
-const AuthContext = createContext(null);
+const AuthContext = createContext({
+  user: null,
+  userProfile: null,
+  loading: true,
+});
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -11,30 +15,36 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    // Se dispara cada vez que cambia el estado de sesión (login/logout)
+    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
-      setUserProfile(null);
-
-      try {
-        if (firebaseUser) {
-          const profileDocument = await getUserById(firebaseUser.uid);
-          const profileData = profileDocument?.data();
-
-          // Compatibilidad con usuarios existentes, creados cuando el campo se llamaba `rol`.
-          setUserProfile(profileData ? {
-            ...profileData,
-            role: profileData.role ?? profileData.rol ?? "user",
-          } : null);
-        }
-      } catch (error) {
-        console.error("Error al cargar el perfil autenticado:", error);
-      } finally {
+      if (!firebaseUser) {
+        setUserProfile(null);
         setLoading(false);
       }
     });
 
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, []);
+
+  useEffect(() => {
+    // Escucha en tiempo real el documento de perfil del usuario logueado
+    if (!user) return;
+
+    const unsubscribeProfile = onSnapshot(
+      doc(db, "users", user.uid),
+      (snap) => {
+        setUserProfile(snap.exists() ? { id: snap.id, ...snap.data() } : null);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error al escuchar el perfil del usuario:", error);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribeProfile();
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{ user, userProfile, loading }}>

@@ -9,7 +9,6 @@ import { obtenerAmigos } from "../services/friendshipService";
 import { getAll } from "../services/postService";
 import { obtenerUidsOcultos } from "../services/blockService";
 import SuggestedPlanet from "../components/SuggestedPlanet";
-import { useAuth } from "../context/AuthContext";
 import "./Explorer.css";
 
 const Explorer = () => {
@@ -18,8 +17,7 @@ const Explorer = () => {
   const [posts, setPosts] = useState([]);
   const [planetas, setPlanetas] = useState([]);
   const [uidsOcultos, setUidsOcultos] = useState(new Set());
-  const { user } = useAuth();
-  const currentUserId = auth.currentUser?.uid || user?.uid;
+  const currentUserId = auth.currentUser?.uid;
 
   useEffect(() => {
     const cargarPosts = async () => {
@@ -100,11 +98,10 @@ const Explorer = () => {
     .filter((planeta) => !uidsOcultos.has(planeta.uid))
     .filter((planeta) => filtrarPlanetas(planeta, search));
 
-  const resultadosPosts = posts.filter((post) => {
-    const noEstaBloqueado = !uidsOcultos.has(post.authorId);
-    const puedeVerPost = post.visibility !== "private" || post.authorId === user?.uid;
-    return noEstaBloqueado && puedeVerPost && filtrarPosts(post, search);
-  });
+  const resultadosPosts = posts
+    .filter((post) => !uidsOcultos.has(post.authorId))
+    .filter((post) => filtrarPosts(post, search));
+
 
   return (
     <div className="explorer-page">
