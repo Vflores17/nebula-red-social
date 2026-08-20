@@ -105,7 +105,10 @@ const Profile = () => {
 
       // 2. Posts que retransmitió
       const repostsSnapshot = await getRepostsByUser(targetUserId);
-      const repostsData = repostsSnapshot.docs.map((d) => d.data());
+      const repostsData = repostsSnapshot.docs.map((d) => ({
+        repostId: d.id,
+        ...d.data(),
+      }));
 
       const repostsConPost = await Promise.all(
         repostsData.map(async (repost) => {
@@ -116,6 +119,7 @@ const Profile = () => {
             id: postDoc.id,
             ...postDoc.data(),
             esRepost: true,
+            repostId: repost.repostId,
             repostCreatedAt: repost.createdAt,
           };
         })
@@ -218,7 +222,7 @@ const Profile = () => {
               <p className="empty-state">No hay transmisiones aún</p>
             ) : (
               misPosts.map((post) => (
-                <div key={post.esRepost ? `repost-${post.id}` : post.id}>
+                <div key={post.esRepost ? `repost-${post.repostId}` : post.id}>
                   {post.esRepost && (
                     <p className="repost-label">🔁 Retransmitiste esto</p>
                   )}

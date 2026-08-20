@@ -30,16 +30,14 @@ export const createLike = async document => await addDoc(collectionRef,document)
 export const updateLike = async (id, documento) => {
     const docRef = doc(db,collectionString,id)
 
-    if (docRef.exists) 
-        return await updateDoc(docRef,documento)
+    return await updateDoc(docRef,documento)
 }
 
 //DELETE
 export const deleteLike = async id => {
     const docRef = doc(db,collectionString,id)
 
-    if (docRef.exists) 
-        return await deleteDoc(docRef)
+    return await deleteDoc(docRef)
 }
 
 // Busca si ya existe un "like" de este usuario a este post

@@ -37,8 +37,7 @@ export const getById = async id => {
 export const deleteBlock = async id => {
     const docRef = doc(db, collectionString, id)
 
-    if (docRef.exists)
-        return await deleteDoc(docRef)
+    return await deleteDoc(docRef)
 }
 
 // ============================================================

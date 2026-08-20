@@ -30,16 +30,14 @@ export const createUser = async document => await addDoc(collectionRef,document)
 export const updateUser = async (id, documento) => {
     const docRef = doc(db,collectionString,id)
 
-    if (docRef.exists) 
-        return await updateDoc(docRef,documento)
+    return await updateDoc(docRef,documento)
 }
 
 //DELETE
 export const deleteUser = async id => {
     const docRef = doc(db,collectionString,id)
 
-    if (docRef.exists) 
-        return await deleteDoc(docRef)
+    return await deleteDoc(docRef)
 }
 
 // GET PROFILE BY ID (devuelve los datos planos del perfil, no el snapshot)

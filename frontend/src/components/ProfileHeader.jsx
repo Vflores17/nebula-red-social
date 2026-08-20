@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import "./ProfileHeader.css";
 import EditProfileModal from "./EditProfileModal";
-import ReportUserModal from "./ReportUserModal";
+import ReportModal from "./ReportModal";
 import { auth } from "../config/firebase";
 import {
   enviarSolicitud,
@@ -22,7 +22,6 @@ const ProfileHeader = ({ profile, isOwnProfile = true, onProfileUpdate }) => {
   const [cargandoBloqueo, setCargandoBloqueo] = useState(false);
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [reportando, setReportando] = useState(false);
-  const [reporteEnviado, setReporteEnviado] = useState(false);
   const menuRef = useRef(null);
   const currentUserId = auth.currentUser?.uid;
 
@@ -193,11 +192,6 @@ const ProfileHeader = ({ profile, isOwnProfile = true, onProfileUpdate }) => {
           </span>
         </div>
 
-        {reporteEnviado && (
-          <p className="reporte-confirmacion">
-            Gracias, tu reporte fue enviado y será revisado.
-          </p>
-        )}
       </div>
 
       {editando && (
@@ -212,15 +206,10 @@ const ProfileHeader = ({ profile, isOwnProfile = true, onProfileUpdate }) => {
       )}
 
       {reportando && (
-        <ReportUserModal
-          reporterId={currentUserId}
-          reportedUserId={profile.uid}
-          reportedName={profile.displayName}
+        <ReportModal
+          targetType="user"
+          targetId={profile.uid}
           onClose={() => setReportando(false)}
-          onReported={() => {
-            setReportando(false);
-            setReporteEnviado(true);
-          }}
         />
       )}
     </div>

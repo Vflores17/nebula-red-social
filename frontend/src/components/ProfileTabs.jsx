@@ -1,9 +1,7 @@
 import './ProfileTabs.css';
 const TABS = [
   { key: "transmisiones", label: "✨ Transmisiones" },
-  { key: "retransmisiones", label: "🔁 Retransmisiones" }, // ← nueva
-  { key: "planetas", label: "🪐 Planetas" },
-  { key: "orbitando", label: "🔄 Orbitando" },
+  { key: "satelites", label: "🪐 Satélites" },
 ];
 
 const ProfileTabs = ({ activeTab, onChange }) => {
