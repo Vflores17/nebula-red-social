@@ -1,0 +1,22 @@
+.admin-page { min-height: 100vh; background: var(--bg-dark); color: var(--text-primary); font-family: var(--font-body); }
+.admin-panel { box-sizing: border-box; width: min(100% - 32px, 980px); margin: 0 auto; padding: 28px 0 48px; }
+.admin-panel > h1 { margin: 0 0 24px; font-family: var(--font-title); font-size: clamp(24px, 5vw, 34px); }
+.admin-access-loading, .admin-empty { padding: 32px; color: var(--text-secondary); text-align: center; }
+.admin-tabs { display: flex; gap: 8px; margin-bottom: 22px; border-bottom: 1px solid var(--border-color); }
+.admin-tabs > button { padding: 10px 14px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--text-secondary); font: inherit; cursor: pointer; }
+.admin-tabs > button.active { border-bottom-color: var(--purple-primary); color: var(--text-primary); }
+.admin-list { display: grid; gap: 14px; }
+.admin-card { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px; border: 1px solid var(--border-color); border-radius: 14px; background: var(--bg-card); }
+.admin-card-content { min-width: 0; }
+.admin-card-content > h2 { margin: 0 0 8px; font-family: var(--font-title); font-size: 17px; }
+.admin-card-content > p { overflow-wrap: anywhere; margin: 5px 0; }
+.admin-meta { display: grid; gap: 5px; margin: 12px 0 0; color: var(--text-secondary); font-size: 13px; }
+.admin-meta > div { display: grid; grid-template-columns: 105px minmax(0, 1fr); gap: 8px; }
+.admin-meta dt { font-weight: 600; }
+.admin-meta dd { overflow-wrap: anywhere; margin: 0; }
+.admin-card-actions { display: flex; flex: 0 0 auto; gap: 8px; }
+.admin-card-actions > button { padding: 8px 12px; border: 1px solid var(--purple-primary); border-radius: 18px; background: transparent; color: var(--text-primary); font: inherit; cursor: pointer; }
+.admin-card-actions > .admin-danger-button { border-color: #fca5a5; color: #fca5a5; }
+.admin-user-id { color: var(--text-secondary); font-size: 12px; }
+@media (max-width: 700px) { .admin-card { align-items: stretch; flex-direction: column; } .admin-card-actions { flex-wrap: wrap; } .admin-card-actions > button { flex: 1 1 180px; } }
+@media (max-width: 420px) { .admin-panel { width: min(100% - 20px, 980px); } .admin-tabs { flex-direction: column; } .admin-meta > div { grid-template-columns: 1fr; gap: 2px; } }

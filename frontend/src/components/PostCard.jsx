@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { getCommentsByPost, createComment } from "../services/commentService";
 import {
@@ -16,12 +16,13 @@ import {
 } from "../services/likeService";
 import { createRepost, getUltimoRepost } from "../services/repostService";
 import { useAuth } from "../context/AuthContext";
-import { getProfileById, getProfileByIdCached } from "../services/userService";
+import { getProfileByIdCached } from "../services/userService";
 import ConfirmModal from "./ConfirmModal";
+import ReportModal from "./ReportModal";
 import { getVimeoId, getYoutubeId, parseHttpUrl } from "../utils/linkParser";
 import "./PostCard.css";
 
-const COOLDOWN_SEGUNDOS = 30; // tiempo de espera entre retransmisiones del mismo post
+const COOLDOWN_SEGUNDOS = 30;
 
 const PostCard = ({
   id,
@@ -38,14 +39,17 @@ const PostCard = ({
   sharesNum,
   visibility,
   onPostEliminado,
+  modoSoloLectura = false,
 }) => {
   const { user, userProfile } = useAuth();
   const esPropio = user?.uid === authorId;
+  const puedeReportar = Boolean(user && authorId && !esPropio);
+
   const [liked, setLiked] = useState(false);
   const [likeDocId, setLikeDocId] = useState(null);
   const [procesandoLike, setProcesandoLike] = useState(true);
   const [destellosCount, setDestallosCount] = useState(destellosNum || 0);
-  const [shareCount, setShareCount] = useState(sharesNum);
+  const [shareCount, setShareCount] = useState(sharesNum || 0);
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [editando, setEditando] = useState(false);
   const [descripcionActual, setDescripcionActual] = useState(description);
@@ -57,6 +61,10 @@ const PostCard = ({
   const [errorAccion, setErrorAccion] = useState("");
   const [errorEdicion, setErrorEdicion] = useState("");
   const [autorActual, setAutorActual] = useState({ nombre, handle, avatar });
+  const [reporteTarget, setReporteTarget] = useState(null);
+  const [imagenFallidaSrc, setImagenFallidaSrc] = useState("");
+  const [avatarFallidoSrc, setAvatarFallidoSrc] = useState("");
+
   const youtubeId = linkUrl ? getYoutubeId(linkUrl) : null;
   const vimeoId = linkUrl ? getVimeoId(linkUrl) : null;
   const parsedLink = linkUrl ? parseHttpUrl(linkUrl) : null;
@@ -66,15 +74,29 @@ const PostCard = ({
   const [comentarios, setComentarios] = useState([]);
   const [nuevoComentario, setNuevoComentario] = useState("");
   const [cargandoComentarios, setCargandoComentarios] = useState(false);
-  const [contadorComentarios, setContadorComentarios] = useState(commentsNum);
+  const [contadorComentarios, setContadorComentarios] = useState(commentsNum || 0);
 
-  // --- Estado nuevo para retransmitir ---
+  // --- Cooldown para retransmitir ---
   const [compartiendo, setCompartiendo] = useState(false); 
   const [segundosRestantes, setSegundosRestantes] = useState(0); 
   const intervalRef = useRef(null); 
 
+  // Manejo defensivo: timeAgo puede llegar como Timestamp de Firestore,
+  // Date ya convertido, o (en teoría) string.
+  const timeAgoTexto =
+    timeAgo && typeof timeAgo === "object" && timeAgo.toDate
+      ? timeAgo.toDate().toLocaleString("es-CR")
+      : timeAgo instanceof Date
+      ? timeAgo.toLocaleString("es-CR")
+      : timeAgo;
+
+  const imagenFallida = Boolean(image && imagenFallidaSrc === image);
+  const avatarEsImagen = autorActual.avatar?.startsWith?.("http");
+  const mostrarAvatarImagen = avatarEsImagen && avatarFallidoSrc !== autorActual.avatar;
+
   const iniciarCooldown = (segundosIniciales) => {
     setSegundosRestantes(segundosIniciales);
+    if (intervalRef.current) clearInterval(intervalRef.current);
 
     intervalRef.current = setInterval(() => {
       setSegundosRestantes((prev) => {
@@ -89,7 +111,6 @@ const PostCard = ({
 
   useEffect(() => {
     let activo = true;
-
     const cargarAutorActual = async () => {
       try {
         const perfil = await getProfileByIdCached(authorId);
@@ -113,6 +134,11 @@ const PostCard = ({
     let activo = true;
 
     const cargarLike = async () => {
+      if (modoSoloLectura) {
+        if (activo) setProcesandoLike(false);
+        return;
+      }
+
       if (!user) {
         if (activo) {
           setLiked(false);
@@ -141,11 +167,11 @@ const PostCard = ({
 
     cargarLike();
     return () => { activo = false; };
-  }, [id, user]);
+  }, [id, user, modoSoloLectura]);
 
   useEffect(() => {
     const revisarCooldown = async () => {
-      if (!user) return;
+      if (!user || modoSoloLectura) return;
       const ultimoRepost = await getUltimoRepost(id, user.uid);
       if (!ultimoRepost || !ultimoRepost.createdAt) return;
 
@@ -161,7 +187,7 @@ const PostCard = ({
 
     revisarCooldown();
     return () => clearInterval(intervalRef.current);
-  }, [id, user]);
+  }, [id, user, modoSoloLectura]);
 
   const handleShares = async () => {
     if (compartiendo || segundosRestantes > 0 || !user || !userProfile) return;
@@ -273,7 +299,7 @@ const PostCard = ({
       setCargandoComentarios(true);
       try {
         const res = await getCommentsByPost(id);
-        setComentarios(res || []);
+        setComentarios(Array.isArray(res) ? res : []);
       } catch (error) {
         console.error("Error al cargar comentarios:", error);
       } finally {
@@ -305,20 +331,45 @@ const PostCard = ({
     <div className="card-post">
       <div className="header">
         <Link to={`/profile/${authorId}`} className="header-link">
-          <div className="avatar">
-            <img src={autorActual.avatar || "/fallback-avatar.png"} alt="Avatar" />
+          <div
+            className="avatar"
+            style={{ backgroundColor: avatarEsImagen ? undefined : autorActual.avatar }}
+          >
+            {mostrarAvatarImagen && (
+              <img
+                src={autorActual.avatar}
+                alt={`Avatar de ${autorActual.nombre}`}
+                onError={() => setAvatarFallidoSrc(autorActual.avatar)}
+              />
+            )}
           </div>
         </Link>
+
         <div className="info">
           <Link to={`/profile/${authorId}`} className="nombrePlanet">
             <strong>{autorActual.nombre}</strong>
           </Link>
           <span className="handle">@{autorActual.handle}</span>
-          <span className="time">• {timeAgo}</span>
-          {visibility === "private" && <span className="post-private-badge">🔒 Privado</span>}
+          <span className="time">• {timeAgoTexto}</span>
+          {visibility === "private" && (
+            <span className="post-private-badge" title="Publicación privada">
+              🔒 Privado
+            </span>
+          )}
+          {puedeReportar && (
+            <button
+              type="button"
+              className="report-author-button"
+              aria-label={`Reportar al autor ${autorActual.nombre}`}
+              title="Reportar autor"
+              onClick={() => setReporteTarget({ type: "user", id: authorId })}
+            >
+              🚩
+            </button>
+          )}
         </div>
 
-        {esPropio && (
+        {esPropio && !modoSoloLectura && (
           <div className="post-owner-menu">
             <button className="post-menu-trigger" onClick={() => setMenuAbierto(!menuAbierto)}>⋮</button>
             {menuAbierto && (
@@ -345,49 +396,92 @@ const PostCard = ({
           <p className="description">{descripcionActual}</p>
         )}
 
-        {image && (
-          <div className="imgPost">
-            <img src={image} alt="Post Content" />
-          </div>
-        )}
-
-        {youtubeId && (
+        {youtubeId ? (
           <div className="post-video-embed">
-            <iframe src={`https://www.youtube.com/embed/${youtubeId}`} title="YouTube video player" allowFullScreen></iframe>
+            <iframe
+              src={`https://www.youtube.com/embed/${youtubeId}`}
+              title="Video de YouTube"
+              allowFullScreen
+              loading="lazy"
+            />
           </div>
-        )}
-
-        {vimeoId && (
+        ) : vimeoId ? (
           <div className="post-video-embed">
-            <iframe src={`https://player.vimeo.com/video/${vimeoId}`} title="Vimeo video player" allowFullScreen></iframe>
+            <iframe
+              src={`https://player.vimeo.com/video/${vimeoId}`}
+              title="Video de Vimeo"
+              allowFullScreen
+              loading="lazy"
+            />
           </div>
-        )}
-
-        {parsedLink && !youtubeId && !vimeoId && (
-          <a href={parsedLink} target="_blank" rel="noopener noreferrer" className="post-link-preview">
-            <span className="post-link-url">{parsedLink}</span>
+        ) : parsedLink ? (
+          <a
+            href={typeof parsedLink === "string" ? parsedLink : parsedLink.href}
+            target="_blank"
+            rel="noreferrer"
+            className="post-link-preview"
+          >
+            <span className="post-link-url">
+              {typeof parsedLink === "string" ? parsedLink : parsedLink.href}
+            </span>
           </a>
+        ) : null}
+
+        {image && !imagenFallida && (
+          <div className="imgPost">
+            <img
+              src={image}
+              alt="Imagen de la publicación"
+              loading="lazy"
+              onError={() => setImagenFallidaSrc(image)}
+            />
+          </div>
+        )}
+
+        {image && imagenFallida && (
+          <p className="post-image-error" role="status">
+            No se pudo cargar la imagen de esta publicación.
+          </p>
         )}
       </div>
 
-      {errorAccion && <p className="post-error">{errorAccion}</p>}
-
-      <div className="options">
-        <button className={`btnDestellos ${liked ? "active" : ""}`} onClick={handleDestello} disabled={procesandoLike}>
-          ✨ {destellosCount}
-        </button>
-        <button className="btnComments" onClick={toggleComentarios}>
-          💬 {contadorComentarios}
-        </button>
-        <button className="btnShares" onClick={handleShares} disabled={compartiendo || segundosRestantes > 0}>
-          🚀 {segundosRestantes > 0 ? `${segundosRestantes}s` : shareCount}
-        </button>
-      </div>
+      {!modoSoloLectura && (
+        <div className="options">
+          <button
+            className={`btnDestellos ${liked ? "active" : ""}`}
+            onClick={handleDestello}
+            disabled={procesandoLike || !user}
+            aria-pressed={liked}
+          >
+            ✨ {destellosCount}
+          </button>
+          <button className="btnComments" onClick={toggleComentarios}>
+            💬 {contadorComentarios}
+          </button>
+          <button className="btnShares" onClick={handleShares} disabled={compartiendo || segundosRestantes > 0}>
+            🚀 {segundosRestantes > 0 ? `${segundosRestantes}s` : shareCount}
+          </button>
+          {puedeReportar && (
+            <button
+              type="button"
+              className="btnReport"
+              onClick={() => setReporteTarget({ type: "post", id })}
+            >
+              🚩 Reportar
+            </button>
+          )}
+        </div>
+      )}
 
       {mostrarComentarios && (
         <div className="comments-panel">
           <form className="comments-input-row" onSubmit={handleEnviarComentario}>
-            <input type="text" placeholder="Escribe un comentario..." value={nuevoComentario} onChange={(e) => setNuevoComentario(e.target.value)} />
+            <input
+              type="text"
+              placeholder="Escribe un comentario..."
+              value={nuevoComentario}
+              onChange={(e) => setNuevoComentario(e.target.value)}
+            />
             <button type="submit">Enviar</button>
           </form>
 
@@ -411,12 +505,46 @@ const PostCard = ({
         </div>
       )}
 
-      {mostrarConfirmGuardar && (
-        <ConfirmModal title="Confirmar Edición" message="¿Estás seguro de guardar los cambios en esta publicación?" onConfirm={handleConfirmarGuardar} onCancel={() => setMostrarConfirmGuardar(false)} />
+      {/* Modales de Confirmación */}
+      <ConfirmModal
+        isOpen={mostrarConfirmGuardar}
+        title="¿Guardar cambios?"
+        message="Se actualizará el texto de esta publicación."
+        confirmLabel="Guardar"
+        loading={guardandoEdicion}
+        onConfirm={handleConfirmarGuardar}
+        onClose={() => setMostrarConfirmGuardar(false)}
+      />
+
+      <ConfirmModal
+        isOpen={mostrarConfirmEliminar}
+        title="¿Eliminar publicación?"
+        message="Esta acción no se puede deshacer."
+        confirmLabel="Eliminar"
+        danger
+        loading={eliminando}
+        onConfirm={handleConfirmarEliminar}
+        onClose={() => setMostrarConfirmEliminar(false)}
+      />
+
+      {errorAccion && (
+        <ConfirmModal
+          isOpen={Boolean(errorAccion)}
+          title="No se pudo completar la acción"
+          message={errorAccion}
+          confirmLabel="Entendido"
+          cancelLabel=""
+          onConfirm={() => setErrorAccion("")}
+          onClose={() => setErrorAccion("")}
+        />
       )}
 
-      {mostrarConfirmEliminar && (
-        <ConfirmModal title="Eliminar Publicación" message="¿Estás seguro de borrar este elemento permanentemente?" onConfirm={handleConfirmarEliminar} onCancel={() => setMostrarConfirmEliminar(false)} />
+      {reporteTarget && (
+        <ReportModal
+          targetType={reporteTarget.type}
+          targetId={reporteTarget.id}
+          onClose={() => setReporteTarget(null)}
+        />
       )}
     </div>
   );

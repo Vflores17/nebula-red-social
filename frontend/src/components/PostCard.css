@@ -5,26 +5,110 @@
     flex-direction: column;
     max-width: 100%;
     height: auto;
-    padding: 8px 12px;
-    gap: 7px;
+    padding: 14px;
+    gap: 12px;
     border: 2px solid rgb(114, 153, 252);
     margin: 8px;
     border-radius: 20px;
     background-color: rgb(2, 14, 47,0.8);
+    box-shadow: 0 6px 18px rgba(45, 72, 145, 0.2);
+    box-sizing: border-box;
+    overflow: hidden;
     
 }
 
 .imgPost {
+    box-sizing: border-box;
     width: 100%;
+    max-width: 100%;
+    max-height: 70vh;
     align-self: stretch;
+    overflow: hidden;
+    border-radius: 14px;
+    background: var(--bg-card);
 }
 
-.avatar{
-    width: 60px;
-    height: 60px;
+/* IMPORTANTE: contiene las imágenes del post incluso si el archivo es muy
+   grande. Mantener este selector limitado a PostCard para evitar regresiones. */
+.card-post .imgPost img {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    max-height: 70vh;
+    height: auto;
+    object-fit: contain;
+}
+
+.card-post .content {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.card-post .description {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+.card-post .post-video-embed {
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 14px;
+    background: var(--bg-card);
+}
+
+.card-post .post-video-embed iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.card-post .post-link-preview {
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.card-post .post-link-url {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.post-image-error {
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    text-align: center;
+}
+
+.card-post .avatar{
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
     flex-shrink: 0;
     display: block;
+    overflow: hidden;
+    background: var(--purple-primary);
+    border: 1px solid var(--border-color);
+}
+
+.card-post .avatar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
 }
 
 .nombrePlanet{
@@ -42,6 +126,10 @@
 .header{
     display: flex;
     flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
 }
 .header-link{
     color: inherit;
@@ -50,7 +138,7 @@
     border-radius: 14px;
     padding: 4px;
     margin: -4px -4px 0;
-    align-self: flex-start;
+    align-self: center;
     transition: background 0.15s ease;
 }
 .header-link:hover{
@@ -61,28 +149,242 @@
 }
 .info{
     display: flex;
+    align-items: flex-start;
     justify-content: center;
-    padding-left: 5px;
+    flex-direction: column;
+    flex: 1;
+    gap: 2px;
+    min-width: 0;
+    padding-left: 0;
+    text-align: left;
+}
+
+.card-post .nombrePlanet,
+.card-post .handle,
+.card-post .time {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    text-align: left;
+}
+
+.report-author-button {
+    position: absolute;
+    top: 4px;
+    right: 42px;
+    padding: 4px 6px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+}
+
+.report-author-button:hover,
+.report-author-button:focus-visible {
+    border-color: var(--purple-primary);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    outline: none;
+}
+
+.post-owner-menu {
+    position: relative;
+    align-self: flex-start;
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+.post-menu-trigger {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    place-items: center;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 1;
+}
+
+.post-menu-trigger:hover,
+.post-menu-trigger:focus-visible {
+    border-color: var(--border-color);
+    background: var(--bg-card);
+    outline: none;
+}
+
+.post-menu-options {
+    position: absolute;
+    z-index: 10;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 140px;
+    padding: 6px;
+    border: 1px solid rgba(114, 153, 252, 0.55);
+    border-radius: 12px;
+    background: var(--bg-dark);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.38);
+}
+
+.post-menu-options button {
+    display: block;
+    width: 100%;
+    padding: 9px 12px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    text-align: left;
+    cursor: pointer;
+}
+
+.post-menu-options button:hover,
+.post-menu-options button:focus-visible {
+    background: var(--bg-card);
+    outline: none;
+}
+
+.post-menu-options .delete-option {
+    color: #fca5a5;
+}
+
+.post-edit-form {
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.post-edit-form textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 110px;
+    padding: 12px 14px;
+    resize: vertical;
+    border: 1px solid rgba(114, 153, 252, 0.55);
+    border-radius: 12px;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.post-edit-form textarea:focus {
+    border-color: var(--purple-primary);
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+    outline: none;
+}
+
+.post-edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.post-edit-actions button {
+    padding: 8px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    cursor: pointer;
+}
+
+.post-edit-actions button:first-child {
+    border-color: var(--purple-primary);
+    background: var(--purple-primary);
+}
+
+.post-edit-actions button:hover:not(:disabled),
+.post-edit-actions button:focus-visible {
+    filter: brightness(1.12);
+    outline: none;
+}
+
+.post-edit-actions button:disabled {
+    cursor: wait;
+    opacity: 0.6;
+}
+
+.post-edit-error {
+    margin: 7px 0 0;
+    color: #fca5a5;
+    font-size: 13px;
 }
 .options{
+    box-sizing: border-box;
     width: 100%;
     display: flex;
-justify-content: space-around;
-    padding: 10px;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 4px 2px;
     border-top: 2px solid rgba(175, 166, 166, 0.4);
 }
 
-.btnDestellos, .btnComments, .btnShares {
+.btnDestellos, .btnComments, .btnShares, .btnReport {
     display: flex;
-    align-items: stretch;
-    gap: 4px;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 110px;
+    min-width: 0;
+    gap: 6px;
     cursor: pointer;
-    padding: 6px 8px;
-    height: 40px;
-    border-radius: 20%;
-    border: 0.1px solid;
+    padding: 8px 10px;
+    min-height: 40px;
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
     background-color: transparent;
-    font-size: 17px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 15px;
+    white-space: nowrap;
+}
+
+.btnReport:hover,
+.btnReport:focus-visible {
+    background: var(--bg-card);
+    color: #fca5a5;
+}
+
+.card-post .handle,
+.card-post .time {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.card-post .post-private-badge {
+    white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+    .card-post {
+        margin: 8px 0;
+        padding: 12px;
+    }
+
+    .card-post .avatar {
+        width: 44px;
+        height: 44px;
+    }
+
+    .options {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .btnDestellos, .btnComments, .btnShares, .btnReport {
+        width: 100%;
+        font-size: 14px;
+    }
 }
 
 .btnDestellos.active {

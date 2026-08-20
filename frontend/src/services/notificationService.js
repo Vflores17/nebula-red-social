@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, updateDoc, query, where, orderBy, serverTimestamp } from 'firebase/firestore'
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, updateDoc, query, where, orderBy, serverTimestamp, onSnapshot } from 'firebase/firestore'
 import {db} from '../config/firebase'
 const collectionString = 'notification'
 
@@ -9,18 +9,14 @@ const collectionRef = collection(db, collectionString)
 // GETALL
 export const getAll = async ()=>{
     const data = await getDocs(collectionRef)
-
     return data
 }
 
 //GETBYID
 export const getById = async id =>{
     const document = await getDoc(doc(db,collectionString,id))
-
-    if (document.exists) return document
-
+    if (document.exists()) return document
     return null
-
 }
 
 //CREATE
@@ -29,17 +25,13 @@ export const createNotification = async document => await addDoc(collectionRef,d
 //UPDATE
 export const updateNotification = async (id, documento) => {
     const docRef = doc(db,collectionString,id)
-
-    if (docRef.exists) 
-        return await updateDoc(docRef,documento)
+    return await updateDoc(docRef,documento)
 }
 
 //DELETE
 export const deleteNotification = async id => {
     const docRef = doc(db,collectionString,id)
-
-    if (docRef.exists) 
-        return await deleteDoc(docRef)
+    return await deleteDoc(docRef)
 }
 
 // ============================================================
@@ -73,4 +65,20 @@ export const obtenerPorUsuario = async (usuarioId) => {
 export const marcarLeida = async (id) => {
     const docRef = doc(db, collectionString, id)
     return await updateDoc(docRef, { leida: true })
+}
+
+export const escucharNotificaciones = (usuarioId, callback) => {
+    const q = query(
+        collectionRef,
+        where('usuarioId', '==', usuarioId),
+        orderBy('createdAt', 'desc')
+    )
+
+    return onSnapshot(q, (snapshot) => {
+        const notificaciones = snapshot.docs.map(docSnap => ({
+            id: docSnap.id,
+            ...docSnap.data(),
+        }))
+        callback(notificaciones)
+    })
 }

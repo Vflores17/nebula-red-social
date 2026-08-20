@@ -9,8 +9,9 @@
 }
 
 .confirm-modal {
-  background: #1a1a1a;
-  color: #fff;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
   padding: 24px;
   width: 90%;
@@ -20,13 +21,15 @@
 
 .confirm-modal-title {
   margin: 0 0 8px;
+  font-family: var(--font-title);
   font-size: 1.1rem;
 }
 
 .confirm-modal-message {
   margin: 0 0 20px;
   font-size: 0.95rem;
-  color: #ccc;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
 }
 
 .confirm-modal-actions {
@@ -44,11 +47,21 @@
 }
 
 .confirm-modal-btn.cancel {
-  background: #333;
-  color: #fff;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
 }
 
 .confirm-modal-btn.confirm {
+  background: var(--purple-primary);
+  color: var(--text-primary);
+}
+
+.confirm-modal-btn.confirm.danger {
   background: #e63946;
-  color: #fff;
+}
+
+.confirm-modal-btn:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }

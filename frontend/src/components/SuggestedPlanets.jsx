@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import SuggestedPlanet from './SuggestedPlanet'
 import { auth } from '../config/firebase'
 import { getAll } from '../services/userService'
-import { obtenerAmigos } from '../services/friendshipService'
+import { obtenerAmigos, obtenerEstado } from '../services/friendshipService'
 import { obtenerUidsOcultos } from '../services/blockService'
 import './SuggestedPlanets.css'
 
@@ -20,15 +20,30 @@ const SuggestedPlanets = () => {
                 obtenerUidsOcultos(currentUserId),
             ])
 
-            const usuarios = snapshot.docs
+            const candidatos = snapshot.docs
                 .map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
                 .filter(u => u.uid && u.uid !== currentUserId && !uidsOcultos.has(u.uid))
+
+            // Consultamos la relación con cada candidato para descartar a
+            // quien ya es amigo o tiene una solicitud pendiente (en cualquier
+            // dirección). A quien nunca tuvo relación o fue rechazado se lo
+            // sigue sugiriendo, ya que la tarjeta permite reintentar el envío
+            // en ese caso (ver SuggestedPlanet.jsx -> "Orbitar").
+            const conEstado = await Promise.all(
+                candidatos.map(async (u) => ({
+                    ...u,
+                    relacion: await obtenerEstado(currentUserId, u.uid),
+                }))
+            )
+
+            const disponibles = conEstado
+                .filter(u => !u.relacion || u.relacion.estado === 'rechazada')
                 .slice(0, 3) // mismo límite de 3 sugerencias que tenía el mock
 
             // No hay un sistema de "seguidores" separado: usamos el número
             // de amistades aceptadas como estadística de la tarjeta.
             const conAmigos = await Promise.all(
-                usuarios.map(async (u) => {
+                disponibles.map(async (u) => {
                     const amigos = await obtenerAmigos(u.uid)
                     return { ...u, amigosCount: amigos.length }
                 })

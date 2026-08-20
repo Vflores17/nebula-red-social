@@ -9,6 +9,7 @@ import { obtenerAmigos } from "../services/friendshipService";
 import { getAll } from "../services/postService";
 import { obtenerUidsOcultos } from "../services/blockService";
 import SuggestedPlanet from "../components/SuggestedPlanet";
+import { useAuth } from "../context/AuthContext";
 import "./Explorer.css";
 
 const Explorer = () => {
@@ -17,7 +18,8 @@ const Explorer = () => {
   const [posts, setPosts] = useState([]);
   const [planetas, setPlanetas] = useState([]);
   const [uidsOcultos, setUidsOcultos] = useState(new Set());
-  const currentUserId = auth.currentUser?.uid;
+  const { user } = useAuth();
+  const currentUserId = auth.currentUser?.uid || user?.uid;
 
   useEffect(() => {
     const cargarPosts = async () => {
@@ -98,10 +100,11 @@ const Explorer = () => {
     .filter((planeta) => !uidsOcultos.has(planeta.uid))
     .filter((planeta) => filtrarPlanetas(planeta, search));
 
-  const resultadosPosts = posts
-    .filter((post) => !uidsOcultos.has(post.authorId))
-    .filter((post) => filtrarPosts(post, search));
-
+  const resultadosPosts = posts.filter((post) => {
+    const noEstaBloqueado = !uidsOcultos.has(post.authorId);
+    const puedeVerPost = post.visibility !== "private" || post.authorId === user?.uid;
+    const puedeVerModerado = post.estado !== "pendiente" || post.authorId === user?.uid;
+return noEstaBloqueado && puedeVerPost && puedeVerModerado && filtrarPosts(post, search);  });
 
   return (
     <div className="explorer-page">
@@ -126,7 +129,12 @@ const Explorer = () => {
           {(activeTab === "todo" || activeTab === "transmisiones") && (
             <div className="content-posts">
               {resultadosPosts.map((post) => (
-                <PostCard key={post.id} id={post.id} {...post} />
+                <PostCard
+  key={post.id}
+  id={post.id}
+  {...post}
+  timeAgo={post.createdAt?.toDate?.() || new Date()}
+/>
               ))}
             </div>
           )}

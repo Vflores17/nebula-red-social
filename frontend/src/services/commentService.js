@@ -22,16 +22,29 @@ export const getCommentsByPost = async (postId) => {
     where("postId", "==", postId), // filtra: solo documentos donde postId coincida
     orderBy("createdAt", "asc")
   );
-  const data = await getDocs(q);
-  return data;
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  }));
 };
 
 // CREATE
-export const createComment = async (documento) => {
-  return await addDoc(collectionRef, {
-    ...documento,
+export const createComment = async (postId, userId, text, autor = {}) => {
+  const comentario = {
+    postId,
+    userId,
+    text,
+    nombre: autor.nombre || "Usuario",
+    avatar: autor.avatar || "",
     createdAt: serverTimestamp(),
-  });
+  };
+
+  const docRef = await addDoc(collectionRef, comentario);
+  return {
+    id: docRef.id,
+    ...comentario,
+  };
 };
 
 // DELETE

@@ -58,6 +58,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
 
 }
 
@@ -65,4 +66,79 @@
     font-size: 25px;
     margin-top: 5px;
     cursor: pointer;
+}
+
+.composer-footer-tools {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+}
+
+.composer-footer-tools .card-import {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    margin: 0;
+    padding: 0;
+    place-items: center;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+.composer-visibility,
+.composer-link-input {
+    box-sizing: border-box;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+}
+
+.composer-visibility {
+    min-height: 38px;
+    padding: 7px 10px;
+}
+
+.composer-link-input {
+    width: 100%;
+    padding: 10px 12px;
+}
+
+.composer-link-input:focus,
+.composer-visibility:focus {
+    border-color: var(--purple-primary);
+    outline: none;
+}
+
+.composer-preview {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    border-radius: 12px;
+}
+
+.composer-preview img {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    max-height: 420px;
+    height: auto;
+    object-fit: contain;
+}
+
+@media (max-width: 560px) {
+    .card-footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .composer-visibility {
+        flex: 1;
+    }
 }

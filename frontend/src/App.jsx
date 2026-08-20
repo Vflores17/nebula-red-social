@@ -5,6 +5,7 @@ import Feed from './pages/Feed';
 import Explorer from './pages/Explorer';
 import Profile from './pages/Profile';
 import TestSolicitudes from './pages/TestSolicitudes';
+import AdminPanel from './pages/AdminPanel';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
       <Route path="/perfil" element={<Profile />} />
       <Route path="/perfil/:uid" element={<Profile />} />
       <Route path="/test-solicitudes" element={<TestSolicitudes />} />
+      <Route path="/admin" element={<AdminPanel />} />
       
     </Routes>
   );
