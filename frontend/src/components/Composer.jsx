@@ -1,20 +1,13 @@
 import { useState, useRef } from "react";
 import { createPost } from "../services/postService";
 import { uploadImage } from "../services/cloudinaryService";
-import { useAuth } from "../context/AuthContext";
-import { parseHttpUrl } from "../utils/linkParser";
-import ConfirmModal from "./ConfirmModal";
 import "./Composer.css";
+import {usuarioActivo } from "../mocks/demoUsers";
 
 const Composer = ({ onPostCreado }) => {
-  const { user, userProfile } = useAuth();
   const [texto, setTexto] = useState("");
   const [imagenFile, setImagenFile] = useState(null); // el archivo real seleccionado
   const [previewUrl, setPreviewUrl] = useState(null); // preview local, antes de subir
-  const [visibility, setVisibility] = useState("public");
-  const [mostrarLink, setMostrarLink] = useState(false);
-  const [linkUrl, setLinkUrl] = useState("");
-  const [errorPublicacion, setErrorPublicacion] = useState("");
   const [enviando, setEnviando] = useState(false);
   const fileInputRef = useRef(null); // para "clickear" el input escondido
 
@@ -32,13 +25,7 @@ const Composer = ({ onPostCreado }) => {
   };
 
   const handleTransmitir = async () => {
-    const linkLimpio = linkUrl.trim();
-    if (linkLimpio && !parseHttpUrl(linkLimpio)) {
-      setErrorPublicacion("Ingresa una URL válida que comience con http:// o https://.");
-      return;
-    }
-
-    if ((!texto.trim() && !imagenFile && !linkLimpio) || !user || !userProfile) return;
+    if (texto.trim() === "" && !imagenFile) return; // no publiques posts vacíos
 
     setEnviando(true);
     try {
@@ -51,25 +38,16 @@ const Composer = ({ onPostCreado }) => {
       await createPost({
         description: texto.trim(),
         image: imageUrl,
-        authorId: user.uid,
-        nombre: userProfile.nombrePlaneta,
-        handle: userProfile.handle || userProfile.username || userProfile.nombrePlaneta,
-        avatar: userProfile.avatar || "",
-        visibility,
-        linkUrl: linkLimpio || null,
+        ...usuarioActivo,
       });
 
       // limpia todo después de publicar
       setTexto("");
       setImagenFile(null);
       setPreviewUrl(null);
-      setVisibility("public");
-      setLinkUrl("");
-      setMostrarLink(false);
       onPostCreado?.();
     } catch (error) {
       console.error("Error al publicar:", error);
-      setErrorPublicacion("No se pudo publicar la transmisión. Inténtalo de nuevo.");
     } finally {
       setEnviando(false);
     }
@@ -98,18 +76,6 @@ const Composer = ({ onPostCreado }) => {
           </div>
         )}
 
-        {mostrarLink && (
-          <input
-            type="url"
-            className="composer-link-input"
-            placeholder="https://youtube.com/watch?v=..."
-            value={linkUrl}
-            onChange={(event) => setLinkUrl(event.target.value)}
-            disabled={enviando}
-            autoFocus
-          />
-        )}
-
         <div className="card-footer">
           {/* input real, escondido con CSS */}
           <input
@@ -121,51 +87,18 @@ const Composer = ({ onPostCreado }) => {
           />
 
           {/* botón visible que "activa" el input escondido */}
-          <div className="composer-footer-tools">
-            <button
-              type="button"
-              className="card-import"
-              aria-label="Adjuntar imagen"
-              onClick={() => fileInputRef.current.click()}
-            >
-              📎
-            </button>
-            <button
-              type="button"
-              className="card-import"
-              aria-label="Agregar enlace"
-              aria-expanded={mostrarLink}
-              onClick={() => setMostrarLink((visible) => !visible)}
-              disabled={enviando}
-            >
-              🔗
-            </button>
-            <select
-              className="composer-visibility"
-              value={visibility}
-              onChange={(event) => setVisibility(event.target.value)}
-              aria-label="Visibilidad de la publicación"
-              disabled={enviando}
-            >
-              <option value="public">🌍 Público</option>
-              <option value="private">🔒 Privado</option>
-            </select>
+          <div
+            className="card-import"
+            onClick={() => fileInputRef.current.click()}
+          >
+            📎
           </div>
 
-          <button onClick={handleTransmitir} disabled={enviando || !userProfile}>
+          <button onClick={handleTransmitir} disabled={enviando}>
             {enviando ? "Transmitiendo..." : "Transmitir ➤"}
           </button>
         </div>
       </div>
-      <ConfirmModal
-        isOpen={Boolean(errorPublicacion)}
-        title="No se pudo publicar"
-        message={errorPublicacion}
-        confirmLabel="Entendido"
-        cancelLabel=""
-        onConfirm={() => setErrorPublicacion("")}
-        onClose={() => setErrorPublicacion("")}
-      />
     </div>
   );
 };

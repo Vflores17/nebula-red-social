@@ -3,7 +3,6 @@ import {db} from '../config/firebase'
 const collectionString = 'users'
 
 const collectionRef = collection(db, collectionString)
-const profileCache = new Map()
 
 // METODOS DEL CRUD
 
@@ -18,7 +17,7 @@ export const getAll = async ()=>{
 export const getById = async id =>{
     const document = await getDoc(doc(db,collectionString,id))
 
-    if (document.exists()) return document
+    if (document.exists) return document
 
     return null
 
@@ -30,27 +29,45 @@ export const createUser = async document => await addDoc(collectionRef,document)
 //UPDATE
 export const updateUser = async (id, documento) => {
     const docRef = doc(db,collectionString,id)
-    return await updateDoc(docRef,documento)
+
+    if (docRef.exists) 
+        return await updateDoc(docRef,documento)
 }
 
 //DELETE
 export const deleteUser = async id => {
     const docRef = doc(db,collectionString,id)
-    return await deleteDoc(docRef)
+
+    if (docRef.exists) 
+        return await deleteDoc(docRef)
 }
 
-// Evita repetir la consulta cuando varias publicaciones pertenecen al mismo autor.
-export const getProfileByIdCached = async id => {
+// GET PROFILE BY ID (devuelve los datos planos del perfil, no el snapshot)
+export const getProfileById = async (id) => {
     if (!id) return null
 
-    if (!profileCache.has(id)) {
-        profileCache.set(id, getById(id).then(document => (
-            document ? { id: document.id, ...document.data() } : null
-        )).catch(error => {
-            profileCache.delete(id)
-            throw error
-        }))
+    const snap = await getDoc(doc(db, collectionString, id))
+
+    if (!snap.exists()) return null
+
+    return { id: snap.id, ...snap.data() }
+}
+
+// GET PROFILE BY ID CON CACHÉ EN MEMORIA (evita relecturas repetidas de Firestore)
+const perfilesCache = new Map()
+
+export const getProfileByIdCached = async (id) => {
+    if (!id) return null
+
+    if (perfilesCache.has(id)) {
+        return perfilesCache.get(id)
     }
 
-    return await profileCache.get(id)
+    const perfil = await getProfileById(id)
+
+    if (perfil) {
+        perfilesCache.set(id, perfil)
+    }
+
+    return perfil
 }
