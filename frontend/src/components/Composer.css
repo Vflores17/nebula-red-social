@@ -1,0 +1,175 @@
+.card-composer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+    border: 1px solid #1c3abc80;
+    padding: 10px;
+    width: 97%;
+    margin: 10px;
+        background-color: rgb(2, 14, 47,0.8);
+
+}
+
+.card-logo{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: #581298;
+    font-size: 40px;
+    height: 50px;
+    width: 50px;
+}
+
+.card-textArea-btn {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    padding: 5px;
+    margin: 5px ;
+    gap: 8px;
+}
+
+.card-composer .composer-preview {
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    border-radius: 15px;
+}
+
+.card-composer .composer-preview img {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+.card-composer .composer-preview-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+}
+
+.card-textArea-btn textarea {
+    height: 70px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 10px;
+    border-radius: 15px;
+    resize: none;
+}
+
+.card-composer .composer-preview {
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    border-radius: 15px;
+}
+
+.card-composer .composer-preview img {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+.card-composer .composer-preview-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+}
+
+.composer-link-input {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+}
+
+.composer-link-input:focus {
+    border-color: var(--purple-primary);
+    outline: none;
+}
+
+.composer-link-input::placeholder {
+    color: var(--text-secondary);
+}
+
+.card-textArea-btn button{
+    background-color: rgba(168, 85, 247, 0.5); 
+    font-size: 15px ; 
+    border-radius: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    padding:4px ;
+    cursor: pointer;
+    margin-top: 5px;
+}
+
+
+
+
+.card-footer{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+}
+
+.card-import{
+    font-size: 25px;
+    margin-top: 5px;
+    cursor: pointer;
+    color: var(--text-primary);
+}
+
+.composer-footer-tools {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.composer-visibility {
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    cursor: pointer;
+}
+
+.composer-visibility:focus {
+    border-color: var(--purple-primary);
+    outline: none;
+}
+
+.composer-visibility option {
+    background: var(--bg-dark);
+    color: var(--text-primary);
+}
+
+@media (max-width: 480px) {
+    .card-footer {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .composer-footer-tools,
+    .composer-visibility {
+        width: 100%;
+    }
+}

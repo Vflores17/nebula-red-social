@@ -1,0 +1,54 @@
+.feed-page{
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 20px;
+    background-color: #0a0e1a; 
+    overflow: hidden;
+}
+
+.feed-main{
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.feed-content {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 30px;
+    width: 100%;      
+    max-width: 800px;  
+}
+
+.feed-SuggestedPlanets{
+    width: 80%;
+}
+
+.feed-empty {
+    color: #9ca3af;
+    text-align: center;
+    padding: 30px 20px;
+    line-height: 1.5;
+}
+
+.feed-empty a {
+    color: #a78bfa;
+    font-weight: 600;
+}
+
+.stars {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+        radial-gradient(1.5px 1.5px at 20px 30px, white, transparent),
+        radial-gradient(1px 1px at 130px 80px, white, transparent),
+        radial-gradient(2px 2px at 70px 160px, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1px 1px at 90px 40px, white, transparent);
+    background-size: 173px 199px, 251px 137px, 197px 223px, 149px 251px;
+    background-repeat: repeat;
+}

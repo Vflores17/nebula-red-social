@@ -1,0 +1,13 @@
+.card-planets {
+    display: flex;
+    flex-direction: column;
+    width: 400px;
+    margin: 15px;
+}
+
+.card-planets h2{
+    font-size: 25px;
+    padding: 10px;
+    border-bottom: 3px solid #381aa2;
+    border-radius: 5%;
+}

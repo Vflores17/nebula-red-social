@@ -1,0 +1,11 @@
+:root {
+  --bg-dark: #0a0a1a;
+  --bg-card: rgba(20, 20, 45, 0.6);
+  --purple-primary: #a855f7;
+  --purple-gradient: linear-gradient(150deg, #6814b7, #bb0ff0fd);
+  --text-primary: #ffffff;
+  --text-secondary: #9ca3af;
+  --border-color: #2d2d44;
+  --font-title: 'Orbitron', sans-serif;
+  --font-body: 'Poppins', sans-serif;
+}
